@@ -1,11 +1,12 @@
 # Windows Dynamic Island & Notch for Windows 🏝️
 
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%20Windows%2011-0078D6?logo=windows&logoColor=white)](https://github.com/hanstp-project/Dynamic-Island-for-Windows)
+[![macOS](https://img.shields.io/badge/Platform-macOS%2013%2B%20(SwiftUI)-000000?logo=apple&logoColor=white)](macos/README.md)
 [![Framework](https://img.shields.io/badge/.NET-10.0%20WPF-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![Architecture](https://img.shields.io/badge/Architecture-x64-blue)](#)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Aplikasi floating bar interaktif nan elegan bergaya **Dynamic Island (iPhone)** dan **MacBook Notch** untuk sistem operasi **Windows 10 & Windows 11**. Dibangun secara native menggunakan C# dan WPF (.NET 10) dengan animasi elastis (*spring easing*), konsumsi sumber daya ringan, dan integrasi penuh ke sistem Windows.
+Aplikasi floating bar interaktif nan elegan bergaya **Dynamic Island (iPhone)** dan **MacBook Notch**. Tersedia untuk sistem operasi **Windows 10 & Windows 11** (Native C# WPF .NET 10) dan **macOS** (Native Swift & SwiftUI di folder `macos/`) dengan animasi elastis (*spring easing*), konsumsi sumber daya ringan, dan integrasi penuh ke sistem operasi.
 
 ---
 
@@ -13,6 +14,7 @@ Aplikasi floating bar interaktif nan elegan bergaya **Dynamic Island (iPhone)** 
 - [✨ Fitur Utama](#-fitur-utama)
 - [📥 Panduan Download & Instalasi (Pengguna Umum)](#-panduan-download--instalasi-pengguna-umum)
 - [🎮 Panduan Lengkap Cara Menggunakan](#-panduan-lengkap-cara-menggunakan)
+- [🍏 Versi macOS (Native Swift & SwiftUI)](#-versi-macos-native-swift--swiftui)
 - [🛠️ Panduan Untuk Pengembang (Build from Source)](#️-panduan-untuk-pengembang-build-from-source)
 - [❓ FAQ & Troubleshooting](#-faq--troubleshooting)
 - [📜 Lisensi](#-lisensi)
@@ -100,6 +102,18 @@ Cari ikon pulau di area notifikasi Taskbar (dekat jam Windows):
   - **Show on all monitors**: Centang jika Anda menggunakan lebih dari satu monitor dan ingin pulau muncul di semua layar.
   - **Settings**: Buka jendela pengaturan posisi dan preferensi.
   - **Exit**: Menutup aplikasi sepenuhnya.
+
+---
+
+## 🍏 Versi macOS (Native Swift & SwiftUI)
+
+Aplikasi ini juga telah di-porting secara khusus dan native untuk komputer **Mac (macOS 13+ Ventura, Sonoma, Sequoia)** di dalam direktori [`macos/`](macos/).
+
+- **Teknologi**: Swift 5.9+, SwiftUI, & AppKit
+- **Kelebihan**: Sangat hemat baterai, memori super ringan (< 25 MB RAM), dan otomatis mendeteksi keberadaan **notch fisik kamera MacBook** (`safeAreaInsets`).
+- **Fitur Lengkap**: Tetap membawa lirik karaoke sinkron LRCLIB, scrubber durasi, kontrol kecerahan layar & volume, mirroring notifikasi, dan status Menu Bar.
+
+👉 **[Baca Dokumentasi Lengkap & Cara Menjalankan di Mac (macos/README.md)](macos/README.md)**
 
 ---
 
