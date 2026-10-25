@@ -222,3 +222,26 @@ public struct IslandMainView: View {
         }
     }
 }
+
+/// Dynamic Island shape: either floating capsule or notch with top edge flat and bottom corners rounded
+public struct IslandShape: Shape {
+    public var isNotch: Bool
+
+    public func path(in rect: CGRect) -> Path {
+        if isNotch {
+            var path = Path()
+            let cornerRadius: CGFloat = min(22, rect.height / 2)
+            path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - cornerRadius))
+            path.addQuadCurve(to: CGPoint(x: rect.maxX - cornerRadius, y: rect.maxY), control: CGPoint(x: rect.maxX, y: rect.maxY))
+            path.addLine(to: CGPoint(x: rect.minX + cornerRadius, y: rect.maxY))
+            path.addQuadCurve(to: CGPoint(x: rect.minX, y: rect.maxY - cornerRadius), control: CGPoint(x: rect.minX, y: rect.maxY))
+            path.closeSubpath()
+            return path
+        } else {
+            return RoundedRectangle(cornerRadius: min(24, rect.height / 2), style: .continuous).path(in: rect)
+        }
+    }
+}
+
