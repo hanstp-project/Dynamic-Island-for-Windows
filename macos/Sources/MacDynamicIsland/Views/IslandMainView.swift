@@ -1,5 +1,46 @@
 import SwiftUI
 
+/// Custom shape for island (pill) or notch (flat top, rounded bottom)
+public struct IslandShape: Shape {
+    public var isNotch: Bool
+
+    public var animatableData: Double {
+        get { isNotch ? 1.0 : 0.0 }
+        set { isNotch = newValue > 0.5 }
+    }
+
+    public func path(in rect: CGRect) -> Path {
+        let radius: CGFloat = 20.0
+        var path = Path()
+        if isNotch {
+            // Flat top against screen bezel, rounded bottom corners
+            path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - radius))
+            path.addArc(
+                center: CGPoint(x: rect.maxX - radius, y: rect.maxY - radius),
+                radius: radius,
+                startAngle: .degrees(0),
+                endAngle: .degrees(90),
+                clockwise: false
+            )
+            path.addLine(to: CGPoint(x: rect.minX + radius, y: rect.maxY))
+            path.addArc(
+                center: CGPoint(x: rect.minX + radius, y: rect.maxY - radius),
+                radius: radius,
+                startAngle: .degrees(90),
+                endAngle: .degrees(180),
+                clockwise: false
+            )
+            path.closeSubpath()
+        } else {
+            // Full pill capsule
+            path.addRoundedRect(in: rect, cornerSize: CGSize(width: 22, height: 22), style: .continuous)
+        }
+        return path
+    }
+}
+
 /// Main container for the Dynamic Island / MacBook Notch on macOS
 public struct IslandMainView: View {
     @EnvironmentObject private var windowController: WindowController
@@ -82,9 +123,9 @@ public struct IslandMainView: View {
                 }
             }
             .frame(width: currentWidth, height: currentHeight)
-            .clipShape(islandShape)
+            .clipShape(IslandShape(isNotch: windowController.currentDisplayMode == .macBookNotch))
             .overlay(
-                islandShape
+                IslandShape(isNotch: windowController.currentDisplayMode == .macBookNotch)
                     .stroke(Color.white.opacity(0.14), lineWidth: 0.8)
             )
             .shadow(color: Color.black.opacity(0.45), radius: 18, x: 0, y: 8)
@@ -98,7 +139,7 @@ public struct IslandMainView: View {
             .onTapGesture {
                 handleTap()
             }
-            .onChange(of: notifService.isNotificationActive) { active in
+            .onReceive(notifService.$isNotificationActive) { active in
                 if active {
                     withAnimation(.spring(response: 0.36, dampingFraction: 0.72)) {
                         expansionState = .notificationExpanded
@@ -113,31 +154,6 @@ public struct IslandMainView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-    }
-
-    // MARK: - Shape & Background
-    private var islandShape: some Shape {
-        if windowController.currentDisplayMode == .macBookNotch {
-            // Notch: flat top against bezel, rounded bottom corners
-            return UnevenRoundedRectangle(
-                topLeadingRadius: 0,
-                bottomLeadingRadius: 20,
-                bottomTrailingRadius: 20,
-                topTrailingRadius: 0,
-                style: .continuous
-            )
-        } else {
-            // Island: full pill capsule
-            return UnevenRoundedRectangle(
-                cornerRadii: RectangleCornerRadii(
-                    topLeading: 22,
-                    bottomLeading: 22,
-                    bottomTrailing: 22,
-                    topTrailing: 22
-                ),
-                style: .continuous
-            )
-        }
     }
 
     private var islandBackground: some View {

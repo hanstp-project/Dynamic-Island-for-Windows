@@ -9,8 +9,26 @@ public final class HardwareControlService: ObservableObject {
     @Published public var brightness: Double = 80.0
     @Published public var volume: Double = 50.0
 
+    private typealias GetBrightnessFunc = @convention(c) (CGDirectDisplayID, UnsafeMutablePointer<Float>) -> Int32
+    private typealias SetBrightnessFunc = @convention(c) (CGDirectDisplayID, Float) -> Int32
+
+    private var getBrightnessFn: GetBrightnessFunc?
+    private var setBrightnessFn: SetBrightnessFunc?
+
     public init() {
+        loadDisplayServices()
         refreshValues()
+    }
+
+    private func loadDisplayServices() {
+        if let handle = dlopen("/System/Library/PrivateFrameworks/DisplayServices.framework/DisplayServices", RTLD_LAZY) {
+            if let getSym = dlsym(handle, "DisplayServicesGetBrightness") {
+                getBrightnessFn = unsafeBitCast(getSym, to: GetBrightnessFunc.self)
+            }
+            if let setSym = dlsym(handle, "DisplayServicesSetBrightness") {
+                setBrightnessFn = unsafeBitCast(setSym, to: SetBrightnessFunc.self)
+            }
+        }
     }
 
     public func refreshValues() {
@@ -37,16 +55,19 @@ public final class HardwareControlService: ObservableObject {
     public func setBrightness(_ newBright: Double) {
         let clamped = min(max(newBright, 0), 100)
         self.brightness = clamped
-
-        // Set brightness via DisplayServices or CoreDisplay
         let normalized = Float(clamped / 100.0)
-        DisplayServicesSetBrightness(CGMainDisplayID(), normalized)
+
+        if let setFn = setBrightnessFn {
+            _ = setFn(CGMainDisplayID(), normalized)
+        }
     }
 
     private func fetchBrightness() {
         var current: Float = 0.8
-        DisplayServicesGetBrightness(CGMainDisplayID(), &current)
-        self.brightness = Double(current * 100.0)
+        if let getFn = getBrightnessFn {
+            _ = getFn(CGMainDisplayID(), &current)
+            self.brightness = Double(current * 100.0)
+        }
     }
 
     private func runAppleScript(_ script: String) -> String? {
@@ -60,10 +81,3 @@ public final class HardwareControlService: ObservableObject {
         return nil
     }
 }
-
-// MARK: - Private DisplayServices C Bridge
-@_silgen_name("DisplayServicesGetBrightness")
-private func DisplayServicesGetBrightness(_ display: CGDirectDisplayID, _ brightness: UnsafeMutablePointer<Float>) -> Int32
-
-@_silgen_name("DisplayServicesSetBrightness")
-private func DisplayServicesSetBrightness(_ display: CGDirectDisplayID, _ brightness: Float) -> Int32

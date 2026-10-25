@@ -60,10 +60,10 @@ jobs:
           name: MacDynamicIsland-macOS
           path: ./macos/MacDynamicIsland-macOS.zip
 
-      - name: Attach to GitHub Release (v1.0.0 or Tag)
+      - name: Attach to GitHub Release (v1.0.0)
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
         with:
+          tag_name: v1.0.0
           files: ./macos/MacDynamicIsland-macOS.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

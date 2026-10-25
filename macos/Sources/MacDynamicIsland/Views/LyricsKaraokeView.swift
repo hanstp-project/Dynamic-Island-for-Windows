@@ -118,7 +118,7 @@ public struct LyricsKaraokeView: View {
                         }
                         .padding(.vertical, 12)
                     }
-                    .onChange(of: lyricsService.activeIndex) { newIdx in
+                    .onReceive(lyricsService.$activeIndex) { newIdx in
                         if newIdx >= 0 {
                             withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
                                 proxy.scrollTo(newIdx, anchor: .center)
