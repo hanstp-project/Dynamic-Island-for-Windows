@@ -34,7 +34,7 @@ public sealed class StartupService
         }
         else if (proc.EndsWith("dotnet.exe", StringComparison.OrdinalIgnoreCase))
         {
-            var dllPath = typeof(StartupService).Assembly.Location;
+            var dllPath = Path.Combine(AppContext.BaseDirectory, "WindowsDynamicIsland.dll");
             _executablePath = proc;
             _arguments = $"\"{dllPath}\" {StartupArgument}";
         }
