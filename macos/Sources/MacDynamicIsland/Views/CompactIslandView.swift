@@ -78,7 +78,7 @@ public struct CompactIslandView: View {
 
             // Right accessory (Live Timer countdown, Stopwatch elapsed, Audio visualizer, or Clock)
             if toolsService.isTimerRunning {
-                Text(toolsService.formatStopwatch(toolsService.timerRemaining))
+                Text(toolsService.formatCountdown(toolsService.timerRemaining))
                     .font(.system(size: 11, weight: .bold, design: .monospaced))
                     .foregroundColor(.orange)
             } else if toolsService.isStopwatchRunning {

@@ -24,16 +24,7 @@ jobs:
           set -e
           
           echo "=== 1. Building Swift Package ==="
-          swift build -c release 2>&1 | tee /tmp/build_log.txt || {
-            echo "::error title=SwiftBuildFailed::Swift build encountered errors!"
-            grep -E "error:" /tmp/build_log.txt | head -n 10 | while IFS= read -r err; do
-              echo "::error::$err"
-            done
-            tail -n 25 /tmp/build_log.txt | while IFS= read -r line; do
-              echo "::error::$line"
-            done
-            exit 1
-          }
+          swift build -c release
           
           echo "=== 2. Creating .app Bundle Structure ==="
           rm -rf MacDynamicIsland.app MacDynamicIsland-macOS.zip
@@ -41,7 +32,12 @@ jobs:
           mkdir -p MacDynamicIsland.app/Contents/Resources
           
           echo "=== 3. Copying Binary ==="
-          if [ -f ".build/arm64-apple-macosx/release/MacDynamicIsland" ]; then
+          BIN_PATH=$(swift build -c release --show-bin-path | tail -n 1 | tr -d '\r')
+          echo "SPM Binary Path: $BIN_PATH"
+          
+          if [ -f "$BIN_PATH/MacDynamicIsland" ]; then
+            cp -v "$BIN_PATH/MacDynamicIsland" MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland
+          elif [ -f ".build/arm64-apple-macosx/release/MacDynamicIsland" ]; then
             cp -v .build/arm64-apple-macosx/release/MacDynamicIsland MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland
           elif [ -f ".build/release/MacDynamicIsland" ]; then
             cp -v .build/release/MacDynamicIsland MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland

@@ -3,6 +3,7 @@ import AppKit
 import AVFoundation
 import CoreImage
 import CoreMedia
+import CoreVideo
 
 public enum RetroFilter: String, CaseIterable, Identifiable {
     case warm90s = "Warm '90s"
@@ -80,14 +81,19 @@ public final class CameraService: NSObject, ObservableObject, AVCaptureVideoData
         let session = AVCaptureSession()
         session.sessionPreset = .medium
 
-        // Discover camera on macOS (built-in or external)
-        let discovery = AVCaptureDevice.DiscoverySession(
-            deviceTypes: [.builtInWideAngleCamera, .externalUnknown],
-            mediaType: .video,
-            position: .unspecified
-        )
+        let camera: AVCaptureDevice? = {
+            if let def = AVCaptureDevice.default(for: .video) {
+                return def
+            }
+            let discovery = AVCaptureDevice.DiscoverySession(
+                deviceTypes: [.builtInWideAngleCamera],
+                mediaType: .video,
+                position: .unspecified
+            )
+            return discovery.devices.first
+        }()
 
-        guard let camera = discovery.devices.first ?? AVCaptureDevice.default(for: .video),
+        guard let camera = camera,
               let input = try? AVCaptureDeviceInput(device: camera),
               session.canAddInput(input) else {
             return
@@ -117,12 +123,11 @@ public final class CameraService: NSObject, ObservableObject, AVCaptureVideoData
     ) {
         guard let cvImage = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         let ciImage = CIImage(cvImageBuffer: cvImage)
-        let context = CIContext()
-        if let cgImage = context.createCGImage(ciImage, from: ciImage.extent) {
-            let nsImage = NSImage(cgImage: cgImage, size: NSSize(width: ciImage.extent.width, height: ciImage.extent.height))
-            Task { @MainActor in
-                self.capturedImage = nsImage
-            }
+        let rep = NSCIImageRep(ciImage: ciImage)
+        let nsImage = NSImage(size: rep.size)
+        nsImage.addRepresentation(rep)
+        Task { @MainActor in
+            self.capturedImage = nsImage
         }
     }
 
