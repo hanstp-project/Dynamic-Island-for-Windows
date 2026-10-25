@@ -23,14 +23,18 @@ jobs:
         run: |
           set -e
           
-          echo "=== 1. Building Swift Package (Release) ==="
-          swift build -c release 2>&1 | tee build_output.txt || {
+          echo "=== 1. Building Swift Package Product ==="
+          swift build -c release --product MacDynamicIsland 2>&1 | tee build_output.txt || {
             echo "::error title=SwiftBuildFailure::Swift build failed!"
             tail -n 30 build_output.txt | while IFS= read -r line; do
               echo "::error::$line"
             done
             exit 1
           }
+          
+          tail -n 15 build_output.txt | while IFS= read -r line; do
+            echo "::notice::BUILD_OUT: $line"
+          done
           
           echo "=== 2. Creating .app Bundle Structure ==="
           rm -rf MacDynamicIsland.app MacDynamicIsland-macOS.zip
@@ -41,9 +45,23 @@ jobs:
           BIN_PATH=$(swift build -c release --show-bin-path | tail -n 1 | tr -d '\r')
           echo "::notice::SPM bin path: $BIN_PATH"
           
+          ls -la "$BIN_PATH" | while IFS= read -r line; do
+            echo "::notice::BIN_DIR: $line"
+          done
+          
           FOUND_BIN=""
           if [ -f "$BIN_PATH/MacDynamicIsland" ]; then
             FOUND_BIN="$BIN_PATH/MacDynamicIsland"
+          fi
+          
+          if [ -z "$FOUND_BIN" ]; then
+            for item in "$BIN_PATH"/*; do
+              if [ -f "$item" ] && [ -x "$item" ]; then
+                echo "::notice::Found executable in bin dir: $item"
+                FOUND_BIN="$item"
+                break
+              fi
+            done
           fi
           
           if [ -z "$FOUND_BIN" ]; then
@@ -58,7 +76,7 @@ jobs:
           
           echo "::notice::Selected executable: $FOUND_BIN"
           if [ -z "$FOUND_BIN" ] || [ ! -f "$FOUND_BIN" ]; then
-            echo "::error::Executable binary could not be found anywhere in .build!"
+            echo "::error::Executable binary could not be found anywhere!"
             exit 1
           fi
           
