@@ -1,6 +1,6 @@
 # Windows Dynamic Island & Notch for Windows 🏝️
 
-[![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%20Windows%2011-0078D6?logo=windows&logoColor=white)](https://github.com/trihandakahasmicro/Dynamic-Island-for-Windows)
+[![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%20Windows%2011-0078D6?logo=windows&logoColor=white)](https://github.com/hanstp-project/Dynamic-Island-for-Windows)
 [![Framework](https://img.shields.io/badge/.NET-10.0%20WPF-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![Architecture](https://img.shields.io/badge/Architecture-x64-blue)](#)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -49,7 +49,7 @@ Aplikasi floating bar interaktif nan elegan bergaya **Dynamic Island (iPhone)** 
 Bagi Anda yang hanya ingin langsung memakai aplikasi tanpa perlu menginstal SDK atau koding:
 
 ### Langkah 1: Download File Aplikasi
-1. Buka halaman rilis resmi di GitHub: 👉 **[Download Windows Dynamic Island (Releases)](https://github.com/trihandakahasmicro/Dynamic-Island-for-Windows/releases)**
+1. Buka halaman rilis resmi di GitHub: 👉 **[Download Windows Dynamic Island (Releases)](https://github.com/hanstp-project/Dynamic-Island-for-Windows/releases)**
 2. Pada rilis versi terbaru (misalnya `v1.0.0`), unduh file:
    - **`WindowsDynamicIsland-Portable.zip`** (Disarankan) atau file executable **`WindowsDynamicIsland.exe`**.
 
@@ -115,7 +115,7 @@ Jika Anda seorang programmer yang ingin memodifikasi kode atau berkontribusi pad
 ### Langkah Menjalankan:
 ```powershell
 # 1. Clone repository
-git clone https://github.com/trihandakahasmicro/Dynamic-Island-for-Windows.git
+git clone https://github.com/hanstp-project/Dynamic-Island-for-Windows.git
 
 # 2. Masuk ke direktori proyek
 cd "Dynamic Island for Windows"
