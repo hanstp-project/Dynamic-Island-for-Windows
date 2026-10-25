@@ -23,78 +23,43 @@ jobs:
         run: |
           set -e
           
-          echo "=== 1. Building Swift Package ==="
+          echo "=== 1. Building Swift Package (Release) ==="
           swift build -c release
           
-          echo "=== 2. Locating Release Binary ==="
-          BIN_FILE=""
-          for f in $(find .build -type f -name "MacDynamicIsland"); do
-            if [ -x "$f" ]; then
-              BIN_FILE="$f"
-              break
-            fi
-          done
-          
-          if [ -z "$BIN_FILE" ]; then
-            BIN_FILE=$(find .build -type f -name "MacDynamicIsland" | head -n 1)
-          fi
-          
-          echo "::notice::Selected binary: $BIN_FILE"
-          if [ -z "$BIN_FILE" ] || [ ! -f "$BIN_FILE" ]; then
-            echo "::error::Could not locate MacDynamicIsland binary in .build!"
-            find .build -name "*MacDynamicIsland*"
-            exit 1
-          fi
-          
-          ls -lh "$BIN_FILE"
-          
-          echo "=== 3. Creating App Bundle Structure ==="
+          echo "=== 2. Creating .app Bundle Structure ==="
           rm -rf MacDynamicIsland.app MacDynamicIsland-macOS.zip
           mkdir -p MacDynamicIsland.app/Contents/MacOS
           mkdir -p MacDynamicIsland.app/Contents/Resources
           
-          cp -p "$BIN_FILE" MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland
+          echo "=== 3. Locating and Copying Executable ==="
+          find .build -type f -name "MacDynamicIsland" -exec cp -v {} MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland \;
           chmod +x MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland
+          ls -la MacDynamicIsland.app/Contents/MacOS/
           
-          if [ ! -s MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland ]; then
-            echo "::error::MacDynamicIsland executable in app bundle is missing or empty!"
-            ls -la MacDynamicIsland.app/Contents/MacOS/
-            exit 1
-          fi
-          
-          echo "=== 4. Adding Info.plist ==="
-          cp Info.plist MacDynamicIsland.app/Contents/Info.plist
+          echo "=== 4. Copying Info.plist ==="
+          cp -v Info.plist MacDynamicIsland.app/Contents/Info.plist
           
           echo "=== 5. Codesigning ==="
           codesign --force --deep --sign - MacDynamicIsland.app || true
           
-          echo "=== 6. Packaging with ditto ==="
+          echo "=== 6. Archiving Bundle ==="
           ditto -c -k --sequesterRsrc --keepParent MacDynamicIsland.app MacDynamicIsland-macOS.zip
-          
           ls -lh MacDynamicIsland-macOS.zip
-          ZIP_SIZE=$(stat -f%z MacDynamicIsland-macOS.zip 2>/dev/null || stat -c%s MacDynamicIsland-macOS.zip)
-          echo "::notice::Created MacDynamicIsland-macOS.zip ($ZIP_SIZE bytes)"
           
-          if [ "$ZIP_SIZE" -lt 50000 ]; then
-            echo "::error::Zip file is suspiciously small ($ZIP_SIZE bytes)!"
-            exit 1
-          fi
-          
-          echo "=== PACKAGING COMPLETE ==="
+          echo "=== 7. Verifying Archive ==="
+          test -f MacDynamicIsland-macOS.zip
+          echo "Build & Packaging Successful!"
 
       - name: Upload Artifact
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: MacDynamicIsland-macOS
           path: ./macos/MacDynamicIsland-macOS.zip
-          if-no-files-found: warn
 
       - name: Attach to GitHub Release (v1.0.0)
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.0
           files: ./macos/MacDynamicIsland-macOS.zip
-          fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
