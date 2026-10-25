@@ -1,6 +1,8 @@
 import Foundation
 import AppKit
 import AVFoundation
+import CoreImage
+import CoreMedia
 
 public enum RetroFilter: String, CaseIterable, Identifiable {
     case warm90s = "Warm '90s"

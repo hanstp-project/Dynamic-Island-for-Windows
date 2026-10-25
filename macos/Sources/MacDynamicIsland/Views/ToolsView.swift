@@ -163,7 +163,6 @@ public struct ToolsView: View {
 
                     TextEditor(text: $toolsService.userNotes)
                         .font(.system(size: 12, design: .rounded))
-                        .scrollContentBackground(.hidden)
                         .background(Color.white.opacity(0.06))
                         .cornerRadius(8)
                         .foregroundColor(.white)

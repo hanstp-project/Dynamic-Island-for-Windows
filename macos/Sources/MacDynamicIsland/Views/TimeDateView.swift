@@ -7,6 +7,26 @@ public struct TimeDateView: View {
 
     public init() {}
 
+    private var timeString: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss"
+        return formatter.string(from: currentTime)
+    }
+
+    private var dateString: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "id_ID")
+        formatter.dateFormat = "EEEE, d MMMM yyyy"
+        return formatter.string(from: currentTime)
+    }
+
+    private var monthYearString: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "id_ID")
+        formatter.dateFormat = "MMMM yyyy"
+        return formatter.string(from: currentTime)
+    }
+
     private var calendarGridDays: [Int] {
         let calendar = Calendar.current
         guard let range = calendar.range(of: .day, in: .month, for: currentTime) else { return Array(1...30) }
@@ -25,12 +45,12 @@ public struct TimeDateView: View {
                     Image(systemName: "clock.fill")
                         .foregroundColor(.blue)
                         .font(.system(size: 13))
-                    Text(currentTime, format: .dateTime.hour().minute().second())
+                    Text(timeString)
                         .font(.system(size: 28, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                 }
 
-                Text(currentTime.formatted(.dateTime.weekday(.wide).day().month(.wide).year()))
+                Text(dateString)
                     .font(.system(size: 13, weight: .medium, design: .rounded))
                     .foregroundColor(.white.opacity(0.8))
 
@@ -58,7 +78,7 @@ public struct TimeDateView: View {
             // Right: Mini Month Calendar Grid
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text(currentTime.formatted(.dateTime.month(.wide).year()))
+                    Text(monthYearString)
                         .font(.system(size: 12, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                     Spacer()
