@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 /// Tools subpage: Stopwatch, Countdown Timer, and Quick Notes Scratchpad
 public struct ToolsView: View {

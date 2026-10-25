@@ -1,4 +1,5 @@
 import SwiftUI
+import Foundation
 
 /// Live Weather Forecast subpage using Open-Meteo REST API
 public struct WeatherView: View {

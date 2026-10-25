@@ -1,4 +1,5 @@
 import SwiftUI
+import Foundation
 
 /// Time & Date subpage with digital clock, date readouts, and mini calendar
 public struct TimeDateView: View {

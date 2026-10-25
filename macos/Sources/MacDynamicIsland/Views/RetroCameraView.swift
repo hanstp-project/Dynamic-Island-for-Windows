@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 /// Retro Instant Camera View with Polaroid Frame, live webcam viewfinder, and filter picker
 public struct RetroCameraView: View {

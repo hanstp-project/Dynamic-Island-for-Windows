@@ -98,7 +98,7 @@ public final class CameraService: NSObject, ObservableObject, AVCaptureVideoData
         self.captureSession = session
     }
 
-    public func nonisolated func captureOutput(
+    nonisolated public func captureOutput(
         _ output: AVCaptureOutput,
         didOutput sampleBuffer: CMSampleBuffer,
         from connection: AVCaptureConnection

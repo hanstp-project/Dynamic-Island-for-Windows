@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 /// Detailed System Health view with CPU, RAM breakdown, Battery, and Disk usage
 public struct SystemHealthView: View {
