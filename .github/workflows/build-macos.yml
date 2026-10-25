@@ -22,52 +22,63 @@ jobs:
         working-directory: ./macos
         run: |
           set -e
-          {
-            set -x
-            echo "=== 1. Building Swift Package ==="
-            swift build -c release
-            
-            echo "=== 2. Locating Release Binary ==="
-            BIN_PATH=$(swift build -c release --show-bin-path)
-            echo "Bin path is: $BIN_PATH"
-            ls -la "$BIN_PATH"
-            
-            echo "=== 3. Creating App Bundle Structure ==="
-            rm -rf MacDynamicIsland.app MacDynamicIsland-macOS.zip
-            mkdir -p MacDynamicIsland.app/Contents/MacOS
-            mkdir -p MacDynamicIsland.app/Contents/Resources
-            
-            cp "$BIN_PATH/MacDynamicIsland" MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland
-            chmod +x MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland
-            
-            echo "=== 4. Adding Info.plist ==="
-            cp Info.plist MacDynamicIsland.app/Contents/Info.plist
-            
-            echo "=== 5. Codesigning ==="
-            codesign --force --deep --sign - MacDynamicIsland.app || true
-            
-            echo "=== 6. Packaging with ditto ==="
-            ditto -c -k --sequesterRsrc --keepParent MacDynamicIsland.app MacDynamicIsland-macOS.zip
-            ls -lh MacDynamicIsland-macOS.zip
-            
-            echo "=== SUCCESS ==="
-          } > build.log 2>&1 || {
-            STATUS=$?
-            echo "=== BUILD OR PACKAGING FAILED ==="
-            cat build.log
-            tail -n 35 build.log | while IFS= read -r line; do
-              echo "::error::$line"
-            done
-            exit $STATUS
-          }
-
-      - name: Upload Build Log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: ./macos/build.log
-          if-no-files-found: ignore
+          
+          echo "=== 1. Building Swift Package ==="
+          swift build -c release
+          
+          echo "=== 2. Locating Release Binary ==="
+          BIN_FILE=""
+          if [ -f ".build/arm64-apple-macosx/release/MacDynamicIsland" ]; then
+            BIN_FILE=".build/arm64-apple-macosx/release/MacDynamicIsland"
+          elif [ -f ".build/release/MacDynamicIsland" ]; then
+            BIN_FILE=".build/release/MacDynamicIsland"
+          else
+            BIN_FILE=$(find .build -type f -name "MacDynamicIsland" | grep -v "\.build" | head -n 1 || true)
+          fi
+          
+          echo "Found binary: $BIN_FILE"
+          if [ -z "$BIN_FILE" ] || [ ! -f "$BIN_FILE" ]; then
+            echo "ERROR: Could not locate MacDynamicIsland binary!"
+            find .build -name "*MacDynamicIsland*"
+            exit 1
+          fi
+          
+          ls -lh "$BIN_FILE"
+          
+          echo "=== 3. Creating App Bundle Structure ==="
+          rm -rf MacDynamicIsland.app MacDynamicIsland-macOS.zip
+          mkdir -p MacDynamicIsland.app/Contents/MacOS
+          mkdir -p MacDynamicIsland.app/Contents/Resources
+          
+          cp -p "$BIN_FILE" MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland
+          chmod +x MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland
+          
+          # Verify binary copied and non-empty
+          if [ ! -s MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland ]; then
+            echo "ERROR: MacDynamicIsland executable in app bundle is missing or empty!"
+            ls -la MacDynamicIsland.app/Contents/MacOS/
+            exit 1
+          fi
+          
+          echo "=== 4. Adding Info.plist ==="
+          cp Info.plist MacDynamicIsland.app/Contents/Info.plist
+          
+          echo "=== 5. Codesigning ==="
+          codesign --force --deep --sign - MacDynamicIsland.app || true
+          
+          echo "=== 6. Packaging with ditto ==="
+          ditto -c -k --sequesterRsrc --keepParent MacDynamicIsland.app MacDynamicIsland-macOS.zip
+          
+          # Verify zip created and non-empty (> 50KB)
+          ls -lh MacDynamicIsland-macOS.zip
+          ZIP_SIZE=$(stat -f%z MacDynamicIsland-macOS.zip 2>/dev/null || stat -c%s MacDynamicIsland-macOS.zip)
+          echo "Created zip of size: $ZIP_SIZE bytes"
+          if [ "$ZIP_SIZE" -lt 50000 ]; then
+            echo "ERROR: Zip file is suspiciously small ($ZIP_SIZE bytes), packaging failed!"
+            exit 1
+          fi
+          
+          echo "=== PACKAGING COMPLETE ==="
 
       - name: Upload Artifact
         if: always()
