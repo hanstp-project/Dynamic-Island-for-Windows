@@ -54,6 +54,7 @@ jobs:
           EOF
           
           chmod +x MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland
+          codesign --force --deep --sign - MacDynamicIsland.app
           zip -r MacDynamicIsland-macOS.zip MacDynamicIsland.app
 
       - name: Upload Artifact
