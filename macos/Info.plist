@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleExecutable</key>
+    <string>MacDynamicIsland</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.hanstpproject.MacDynamicIsland</string>
+    <key>CFBundleName</key>
+    <string>MacDynamicIsland</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSCameraUsageDescription</key>
+    <string>Dynamic Island memerlukan akses kamera untuk fitur Retro Instant Camera.</string>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>Dynamic Island memerlukan izin untuk membaca status lagu Spotify dan Apple Music.</string>
+</dict>
+</plist>

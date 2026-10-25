@@ -26,42 +26,38 @@ jobs:
       - name: Create Mac App Bundle (.app)
         working-directory: ./macos
         run: |
-          BIN_PATH=$(swift build -c release --show-bin-path)
-          echo "Binary path: $BIN_PATH"
+          set -e
+          rm -rf MacDynamicIsland.app MacDynamicIsland-macOS.zip
+          
+          # Find compiled binary
+          EXEC_PATH=""
+          if [ -f ".build/arm64-apple-macosx/release/MacDynamicIsland" ]; then
+            EXEC_PATH=".build/arm64-apple-macosx/release/MacDynamicIsland"
+          elif [ -f ".build/release/MacDynamicIsland" ]; then
+            EXEC_PATH=".build/release/MacDynamicIsland"
+          else
+            EXEC_PATH=$(find .build -type f -name "MacDynamicIsland" | head -n 1)
+          fi
+          
+          echo "Found binary at: $EXEC_PATH"
+          if [ -z "$EXEC_PATH" ] || [ ! -f "$EXEC_PATH" ]; then
+            echo "Error: MacDynamicIsland binary not found!"
+            find .build -name "*MacDynamicIsland*"
+            exit 1
+          fi
+          
           mkdir -p MacDynamicIsland.app/Contents/MacOS
           mkdir -p MacDynamicIsland.app/Contents/Resources
-          cp "$BIN_PATH/MacDynamicIsland" MacDynamicIsland.app/Contents/MacOS/
           
-          cat << 'EOF' > MacDynamicIsland.app/Contents/Info.plist
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>CFBundleExecutable</key>
-              <string>MacDynamicIsland</string>
-              <key>CFBundleIdentifier</key>
-              <string>com.hanstpproject.MacDynamicIsland</string>
-              <key>CFBundleName</key>
-              <string>MacDynamicIsland</string>
-              <key>CFBundlePackageType</key>
-              <string>APPL</string>
-              <key>CFBundleShortVersionString</key>
-              <string>1.0.0</string>
-              <key>LSMinimumSystemVersion</key>
-              <string>13.0</string>
-              <key>LSUIElement</key>
-              <true/>
-              <key>NSCameraUsageDescription</key>
-              <string>Dynamic Island memerlukan akses kamera untuk fitur Retro Instant Camera.</string>
-              <key>NSAppleEventsUsageDescription</key>
-              <string>Dynamic Island memerlukan izin untuk membaca status lagu Spotify dan Apple Music.</string>
-          </dict>
-          </plist>
-          EOF
-          
+          cp "$EXEC_PATH" MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland
           chmod +x MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland
+          
+          cp Info.plist MacDynamicIsland.app/Contents/Info.plist
+          
           codesign --force --deep --sign - MacDynamicIsland.app || true
+          
           zip -r MacDynamicIsland-macOS.zip MacDynamicIsland.app
+          ls -lh MacDynamicIsland-macOS.zip
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -74,5 +70,6 @@ jobs:
         with:
           tag_name: v1.0.0
           files: ./macos/MacDynamicIsland-macOS.zip
+          fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
