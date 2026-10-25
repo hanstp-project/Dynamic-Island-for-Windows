@@ -28,17 +28,20 @@ jobs:
           
           echo "=== 2. Locating Release Binary ==="
           BIN_FILE=""
-          if [ -f ".build/arm64-apple-macosx/release/MacDynamicIsland" ]; then
-            BIN_FILE=".build/arm64-apple-macosx/release/MacDynamicIsland"
-          elif [ -f ".build/release/MacDynamicIsland" ]; then
-            BIN_FILE=".build/release/MacDynamicIsland"
-          else
-            BIN_FILE=$(find .build -type f -name "MacDynamicIsland" | grep -v "\.build" | head -n 1 || true)
+          for f in $(find .build -type f -name "MacDynamicIsland"); do
+            if [ -x "$f" ]; then
+              BIN_FILE="$f"
+              break
+            fi
+          done
+          
+          if [ -z "$BIN_FILE" ]; then
+            BIN_FILE=$(find .build -type f -name "MacDynamicIsland" | head -n 1)
           fi
           
-          echo "Found binary: $BIN_FILE"
+          echo "::notice::Selected binary: $BIN_FILE"
           if [ -z "$BIN_FILE" ] || [ ! -f "$BIN_FILE" ]; then
-            echo "ERROR: Could not locate MacDynamicIsland binary!"
+            echo "::error::Could not locate MacDynamicIsland binary in .build!"
             find .build -name "*MacDynamicIsland*"
             exit 1
           fi
@@ -53,9 +56,8 @@ jobs:
           cp -p "$BIN_FILE" MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland
           chmod +x MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland
           
-          # Verify binary copied and non-empty
           if [ ! -s MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland ]; then
-            echo "ERROR: MacDynamicIsland executable in app bundle is missing or empty!"
+            echo "::error::MacDynamicIsland executable in app bundle is missing or empty!"
             ls -la MacDynamicIsland.app/Contents/MacOS/
             exit 1
           fi
@@ -69,12 +71,12 @@ jobs:
           echo "=== 6. Packaging with ditto ==="
           ditto -c -k --sequesterRsrc --keepParent MacDynamicIsland.app MacDynamicIsland-macOS.zip
           
-          # Verify zip created and non-empty (> 50KB)
           ls -lh MacDynamicIsland-macOS.zip
           ZIP_SIZE=$(stat -f%z MacDynamicIsland-macOS.zip 2>/dev/null || stat -c%s MacDynamicIsland-macOS.zip)
-          echo "Created zip of size: $ZIP_SIZE bytes"
+          echo "::notice::Created MacDynamicIsland-macOS.zip ($ZIP_SIZE bytes)"
+          
           if [ "$ZIP_SIZE" -lt 50000 ]; then
-            echo "ERROR: Zip file is suspiciously small ($ZIP_SIZE bytes), packaging failed!"
+            echo "::error::Zip file is suspiciously small ($ZIP_SIZE bytes)!"
             exit 1
           fi
           
