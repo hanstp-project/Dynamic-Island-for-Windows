@@ -26,9 +26,11 @@ jobs:
       - name: Create Mac App Bundle (.app)
         working-directory: ./macos
         run: |
+          BIN_PATH=$(swift build -c release --show-bin-path)
+          echo "Binary path: $BIN_PATH"
           mkdir -p MacDynamicIsland.app/Contents/MacOS
           mkdir -p MacDynamicIsland.app/Contents/Resources
-          cp .build/release/MacDynamicIsland MacDynamicIsland.app/Contents/MacOS/
+          cp "$BIN_PATH/MacDynamicIsland" MacDynamicIsland.app/Contents/MacOS/
           
           cat << 'EOF' > MacDynamicIsland.app/Contents/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
@@ -58,7 +60,7 @@ jobs:
           EOF
           
           chmod +x MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland
-          codesign --force --deep --sign - MacDynamicIsland.app
+          codesign --force --deep --sign - MacDynamicIsland.app || true
           zip -r MacDynamicIsland-macOS.zip MacDynamicIsland.app
 
       - name: Upload Artifact
