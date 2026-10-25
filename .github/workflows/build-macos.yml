@@ -1,0 +1,69 @@
+name: Build macOS App
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-macos:
+    runs-on: macos-14
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build with Swift Package Manager
+        working-directory: ./macos
+        run: |
+          swift build -c release
+
+      - name: Create Mac App Bundle (.app)
+        working-directory: ./macos
+        run: |
+          mkdir -p MacDynamicIsland.app/Contents/MacOS
+          mkdir -p MacDynamicIsland.app/Contents/Resources
+          cp .build/release/MacDynamicIsland MacDynamicIsland.app/Contents/MacOS/
+          
+          cat << 'EOF' > MacDynamicIsland.app/Contents/Info.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleExecutable</key>
+              <string>MacDynamicIsland</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.hanstpproject.MacDynamicIsland</string>
+              <key>CFBundleName</key>
+              <string>MacDynamicIsland</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleShortVersionString</key>
+              <string>1.0.0</string>
+              <key>LSMinimumSystemVersion</key>
+              <string>13.0</string>
+              <key>LSUIElement</key>
+              <true/>
+          </dict>
+          </plist>
+          EOF
+          
+          chmod +x MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland
+          zip -r MacDynamicIsland-macOS.zip MacDynamicIsland.app
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MacDynamicIsland-macOS
+          path: ./macos/MacDynamicIsland-macOS.zip
+
+      - name: Attach to GitHub Release (v1.0.0 or Tag)
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: ./macos/MacDynamicIsland-macOS.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
