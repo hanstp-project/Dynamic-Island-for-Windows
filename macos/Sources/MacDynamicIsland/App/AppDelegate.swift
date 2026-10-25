@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 
+@MainActor
 public final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
 

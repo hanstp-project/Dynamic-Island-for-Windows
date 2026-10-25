@@ -1,4 +1,5 @@
 import Foundation
+import Darwin
 import IOKit.ps
 
 /// Real-time macOS System Monitor (CPU, RAM, Battery, Network)

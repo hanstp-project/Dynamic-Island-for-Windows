@@ -1,5 +1,6 @@
 import Foundation
 import AppKit
+import Darwin
 
 /// Service for controlling macOS hardware sliders (Screen Brightness & System Volume)
 @MainActor

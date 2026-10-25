@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 /// Apple Music Sing style synchronized lyrics with interactive Click-to-Seek
 public struct LyricsKaraokeView: View {
