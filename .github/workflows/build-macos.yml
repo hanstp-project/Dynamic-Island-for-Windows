@@ -21,7 +21,7 @@ jobs:
       - name: Build with Swift Package Manager
         working-directory: ./macos
         run: |
-          swift build -c release
+          swift build -c release 2>&1 | tee build_output.txt || (echo "=== SWIFT BUILD FAILURE ===" && cat build_output.txt && exit 1)
 
       - name: Create Mac App Bundle (.app)
         working-directory: ./macos
