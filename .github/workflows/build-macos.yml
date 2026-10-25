@@ -21,15 +21,44 @@ jobs:
       - name: Build and Package Mac App (.app)
         working-directory: ./macos
         run: |
-          tr -d '\r' < package.sh > package_clean.sh
-          chmod +x package_clean.sh
-          ./package_clean.sh
+          set -e
+          set -x
+          
+          echo "=== 1. Building Swift Package ==="
+          swift build -c release
+          
+          echo "=== 2. Locating Release Binary ==="
+          BIN_PATH=$(swift build -c release --show-bin-path)
+          echo "Bin path is: $BIN_PATH"
+          ls -la "$BIN_PATH"
+          
+          echo "=== 3. Creating App Bundle Structure ==="
+          rm -rf MacDynamicIsland.app MacDynamicIsland-macOS.zip
+          mkdir -p MacDynamicIsland.app/Contents/MacOS
+          mkdir -p MacDynamicIsland.app/Contents/Resources
+          
+          cp "$BIN_PATH/MacDynamicIsland" MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland
+          chmod +x MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland
+          
+          echo "=== 4. Adding Info.plist ==="
+          cp Info.plist MacDynamicIsland.app/Contents/Info.plist
+          
+          echo "=== 5. Codesigning ==="
+          codesign --force --deep --sign - MacDynamicIsland.app || true
+          
+          echo "=== 6. Packaging with ditto ==="
+          ditto -c -k --sequesterRsrc --keepParent MacDynamicIsland.app MacDynamicIsland-macOS.zip
+          ls -lh MacDynamicIsland-macOS.zip
+          
+          echo "=== SUCCESS ==="
 
       - name: Upload Artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: MacDynamicIsland-macOS
           path: ./macos/MacDynamicIsland-macOS.zip
+          if-no-files-found: warn
 
       - name: Attach to GitHub Release (v1.0.0)
         uses: softprops/action-gh-release@v2
