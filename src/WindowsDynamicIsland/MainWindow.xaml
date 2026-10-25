@@ -1,0 +1,1413 @@
+<Window x:Class="WindowsDynamicIsland.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="clr-namespace:WindowsDynamicIsland.Controls"
+        mc:Ignorable="d"
+        Title="Windows Dynamic Island"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        ResizeMode="NoResize"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
+
+    <Grid x:Name="RootGrid" ClipToBounds="False">
+        <controls:IslandPill x:Name="Pill"
+                             Panel.ZIndex="10"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Top"
+                             Cursor="Hand"
+                             MouseEnter="Pill_MouseEnter"
+                             MouseLeave="Pill_MouseLeave"
+                             MouseLeftButtonUp="Pill_MouseLeftButtonUp"
+                             MouseRightButtonUp="Pill_MouseRightButtonUp">
+            <Grid ClipToBounds="True">
+
+                <!-- ============================================================ -->
+                    <!-- LAYER 1: COMPACT VIEW (Idle & Music Playing)                -->
+                    <!-- ============================================================ -->
+                    <Grid x:Name="CompactLayer" Height="32" VerticalAlignment="Center" Opacity="1">
+                        <Grid.RenderTransform>
+                            <ScaleTransform ScaleX="1" ScaleY="1" />
+                        </Grid.RenderTransform>
+
+                        <!-- Idle State Content -->
+                        <Grid x:Name="CompactIdleContent" Visibility="Visible">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Clock -->
+                            <TextBlock x:Name="CompactClock" Grid.Column="0" Text="12:00"
+                                       FontFamily="{DynamicResource Font.Text}" FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Text.Primary}" VerticalAlignment="Center"
+                                       Margin="14,0,0,0" />
+
+                            <!-- Center Sensor Dot / Pill Capsule -->
+                            <Border x:Name="CompactSensorDot" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                    Width="8" Height="8" CornerRadius="4" Background="#2C2C2E" />
+
+                            <!-- Battery & Power -->
+                            <StackPanel x:Name="CompactBatteryPanel" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
+                                <controls:BatteryGlyph x:Name="CompactBattery" Width="20" Height="10"
+                                                       VerticalAlignment="Center" Margin="0,0,4,0"
+                                                       FillBrush="{DynamicResource Accent.Green}"
+                                                       OutlineBrush="{DynamicResource Text.Tertiary}" />
+                                <TextBlock x:Name="CompactBatteryText" Text="100%"
+                                           FontFamily="{DynamicResource Font.Text}" FontSize="11"
+                                           Foreground="{DynamicResource Text.Secondary}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Music Playing Compact Content -->
+                        <Grid x:Name="CompactMusicContent" Visibility="Collapsed">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Mini Artwork -->
+                            <Border Grid.Column="0" Width="22" Height="22" CornerRadius="5" ClipToBounds="True"
+                                    Background="{DynamicResource Fill.Placeholder}" VerticalAlignment="Center" Margin="6,0,6,0">
+                                <Grid>
+                                    <Image x:Name="CompactArtwork" Stretch="UniformToFill" />
+                                    <TextBlock x:Name="CompactMusicIconFallback" Text="&#xE8D6;"
+                                               FontFamily="{DynamicResource Font.Icons}" FontSize="11"
+                                               Foreground="{DynamicResource Text.Secondary}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+
+                            <!-- Center Content: Default Track Info OR Compact Live Lyrics -->
+                            <Grid Grid.Column="1" VerticalAlignment="Center" ClipToBounds="True">
+                                <!-- Default: Track & Artist snippet -->
+                                <StackPanel x:Name="CompactTrackInfoPanel" Orientation="Horizontal" VerticalAlignment="Center" ClipToBounds="True">
+                                    <TextBlock x:Name="CompactTrackTitle" Text="Track Title"
+                                               FontFamily="{DynamicResource Font.Text}" FontSize="11.5" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource Text.Primary}" TextTrimming="CharacterEllipsis"
+                                               MaxWidth="120" VerticalAlignment="Center" />
+                                    <TextBlock Text=" • " FontSize="11" Foreground="{DynamicResource Text.Tertiary}" VerticalAlignment="Center" />
+                                    <TextBlock x:Name="CompactArtist" Text="Artist"
+                                               FontFamily="{DynamicResource Font.Text}" FontSize="11"
+                                               Foreground="{DynamicResource Text.Secondary}" TextTrimming="CharacterEllipsis"
+                                               MaxWidth="80" VerticalAlignment="Center" />
+                                </StackPanel>
+
+                                <!-- Live Lyrics Mode in Compact Pill -->
+                                <StackPanel x:Name="CompactLyricsPanel" Orientation="Horizontal" VerticalAlignment="Center" ClipToBounds="True" Visibility="Collapsed">
+                                    <TextBlock Text="🎵 " FontSize="9" Foreground="{DynamicResource Accent.Green}" VerticalAlignment="Center" Margin="0,0,2,0" />
+                                    <TextBlock x:Name="CompactLiveLyricText" Text="Loading lyrics..."
+                                               FontFamily="{DynamicResource Font.Text}" FontSize="11.5" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource Text.Primary}" TextTrimming="CharacterEllipsis"
+                                               MaxWidth="180" VerticalAlignment="Center">
+                                        <TextBlock.RenderTransform>
+                                            <TranslateTransform x:Name="CompactLiveLyricTranslate" X="0" Y="0" />
+                                        </TextBlock.RenderTransform>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Audio Visualizer Waveform -->
+                            <controls:AudioVisualizer x:Name="CompactVisualizer" Grid.Column="2"
+                                                      BarBrush="{DynamicResource Accent.Green}"
+                                                      VerticalAlignment="Center" Margin="0,0,10,0" Height="16" />
+                        </Grid>
+                    </Grid>
+
+                    <!-- ============================================================ -->
+                    <!-- LAYER 2: EXPANDED VIEW                                       -->
+                    <!-- ============================================================ -->
+                    <Grid x:Name="ExpandedLayer" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0"
+                          Opacity="0" Visibility="Collapsed" RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
+                        </Grid.RenderTransform>
+
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Expanded Header / Navigation Bar -->
+                        <Grid Grid.Row="0" Margin="16,6,16,4">
+                            <!-- Header Title & Style Switcher -->
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <TextBlock x:Name="ExpandedHeaderTitle" Text="Control Dashboard"
+                                           FontFamily="{DynamicResource Font.Text}" FontSize="11" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource Text.Tertiary}" VerticalAlignment="Center" />
+                                <Button x:Name="BtnStyleSwitcher" Style="{DynamicResource IslandButton}"
+                                        Padding="6,2" Margin="8,0,0,0" Click="BtnStyleSwitcher_Click"
+                                        ToolTip="Ganti Mode: Dynamic Island &lt;-&gt; Notch Island">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock x:Name="StyleSwitcherIcon" Text="📱" FontSize="10.5" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                        <TextBlock x:Name="StyleSwitcherText" Text="Notch" FontFamily="{DynamicResource Font.Text}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Accent.Blue}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+
+                            <!-- Page Indicator Dots -->
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Button x:Name="PageDotDashboard" Style="{DynamicResource DotButton}" Tag="{x:Null}"
+                                        ToolTip="Control Dashboard (Notch &amp; Island)" Click="PageDotDashboard_Click" />
+                                <Button x:Name="PageDotMedia" Style="{DynamicResource DotButton}" Tag="{x:Null}"
+                                        ToolTip="Media Controls" Click="PageDotMedia_Click" />
+                                <Button x:Name="PageDotCamera" Style="{DynamicResource DotButton}" Tag="{x:Null}"
+                                        ToolTip="Retro Instant Camera &amp; Polaroid" Click="PageDotCamera_Click" />
+                                <Button x:Name="PageDotSystem" Style="{DynamicResource DotButton}" Tag="{x:Null}"
+                                        ToolTip="System Performance" Click="PageDotSystem_Click" />
+                                <Button x:Name="PageDotClock" Style="{DynamicResource DotButton}" Tag="{x:Null}"
+                                        ToolTip="Clock &amp; Shortcuts" Click="PageDotClock_Click" />
+                                <Button x:Name="PageDotTools" Style="{DynamicResource DotButton}" Tag="{x:Null}"
+                                        ToolTip="Stopwatch &amp; Apps" Click="PageDotTools_Click" />
+                                <Button x:Name="PageDotWeather" Style="{DynamicResource DotButton}" Tag="{x:Null}"
+                                        ToolTip="Weather &amp; Reminders" Click="PageDotWeather_Click" />
+                            </StackPanel>
+
+                            <!-- Action Buttons: Settings & Collapse -->
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <Button x:Name="BtnSettings" Style="{DynamicResource IslandButton}" Width="24" Height="24"
+                                        Margin="0,0,4,0" Click="BtnSettings_Click" ToolTip="Settings">
+                                    <TextBlock Text="&#xE713;" FontFamily="{DynamicResource Font.Icons}" FontSize="11"
+                                               Foreground="{DynamicResource Text.Secondary}" />
+                                </Button>
+                                <Button x:Name="BtnCollapse" Style="{DynamicResource IslandButton}" Width="24" Height="24"
+                                        Click="BtnCollapse_Click" ToolTip="Collapse">
+                                    <TextBlock Text="&#xE70E;" FontFamily="{DynamicResource Font.Icons}" FontSize="10"
+                                               Foreground="{DynamicResource Text.Secondary}" />
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- SUBPAGE: Control Dashboard (Notch & Island Style Center - Centered & Compact) -->
+                        <Grid x:Name="SubpageDashboard" Grid.Row="1" Visibility="Visible" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,0,0,10">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <!-- ROW 0: 4 Main Dashboard Cards -->
+                            <Grid Grid.Row="0">
+                                <Grid.ColumnDefinitions>
+                                    <!-- Column 0: Weather Card -->
+                                    <ColumnDefinition Width="128" />
+                                    <!-- Column 1: Quick Toggles (Wi-Fi, BT, Night Light, etc.) -->
+                                    <ColumnDefinition Width="168" />
+                                    <!-- Column 2: Quick Apps (Calculator, Notepad, Task Mgr, etc.) -->
+                                    <ColumnDefinition Width="142" />
+                                    <!-- Column 3: Day Progress & Date/Time -->
+                                    <ColumnDefinition Width="150" />
+                                </Grid.ColumnDefinitions>
+
+                            <!-- 1. WEATHER CARD -->
+                            <Border Grid.Column="0" Background="#1AFFFFFF" CornerRadius="12" Padding="10,8" Margin="0,0,8,0"
+                                    Cursor="Hand" MouseLeftButtonUp="DashWeatherCard_Click" ToolTip="Click to open Weather &amp; Notes">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Location -->
+                                    <StackPanel Grid.Row="0" Orientation="Horizontal">
+                                        <TextBlock Text="&#xE819;" FontFamily="{DynamicResource Font.Icons}" FontSize="9.5"
+                                                   Foreground="{DynamicResource Accent.Red}" VerticalAlignment="Center" Margin="0,0,4,0" />
+                                        <TextBlock x:Name="DashLocation" Text="INDONESIA" FontFamily="{DynamicResource Font.Text}"
+                                                   FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Text.Tertiary}"
+                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    </StackPanel>
+
+                                    <!-- Big Temperature & Icon -->
+                                    <StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,4,0,4">
+                                        <TextBlock x:Name="DashWeatherIcon" Text="&#xE753;" FontFamily="{DynamicResource Font.Icons}"
+                                                   FontSize="22" Foreground="{DynamicResource Accent.Yellow}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                        <TextBlock x:Name="DashTemperature" Text="28°" FontFamily="{DynamicResource Font.Display}"
+                                                   FontSize="24" FontWeight="Bold" Foreground="{DynamicResource Text.Primary}"
+                                                   VerticalAlignment="Center" />
+                                    </StackPanel>
+
+                                    <!-- Condition -->
+                                    <TextBlock x:Name="DashCondition" Grid.Row="2" Text="Overcast" FontFamily="{DynamicResource Font.Text}"
+                                               FontSize="11" Foreground="{DynamicResource Text.Secondary}" TextTrimming="CharacterEllipsis" Margin="0,1,0,1" />
+
+                                    <!-- High / Low -->
+                                    <TextBlock x:Name="DashHighLow" Grid.Row="3" Text="H 30° • L 22°" FontFamily="{DynamicResource Font.Text}"
+                                               FontSize="9" Foreground="{DynamicResource Text.Tertiary}" Margin="0,1,0,0" />
+                                </Grid>
+                            </Border>
+
+                            <!-- 2. QUICK TOGGLES (Grid 4x2) -->
+                            <Border Grid.Column="1" Background="#1AFFFFFF" CornerRadius="12" Padding="8,8" Margin="0,0,8,0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="⚡ QUICK TOGGLES" FontFamily="{DynamicResource Font.Text}"
+                                               FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Text.Tertiary}" Margin="2,0,0,4" />
+
+                                    <Grid Grid.Row="1">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*" />
+                                            <RowDefinition Height="*" />
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Row 0: Wi-Fi, Bluetooth, Night Light, Hotspot -->
+                                        <Button x:Name="BtnToggleWifi" Grid.Row="0" Grid.Column="0" Style="{DynamicResource IslandButton}"
+                                                Width="34" Height="34" Click="BtnToggleWifi_Click" ToolTip="Wi-Fi Settings">
+                                            <TextBlock Text="&#xE701;" FontFamily="{DynamicResource Font.Icons}" FontSize="13.5" Foreground="{DynamicResource Accent.Blue}" />
+                                        </Button>
+
+                                        <Button x:Name="BtnToggleBluetooth" Grid.Row="0" Grid.Column="1" Style="{DynamicResource IslandButton}"
+                                                Width="34" Height="34" Click="BtnToggleBluetooth_Click" ToolTip="Bluetooth Settings">
+                                            <TextBlock Text="&#xE702;" FontFamily="{DynamicResource Font.Icons}" FontSize="13.5" Foreground="{DynamicResource Accent.Blue}" />
+                                        </Button>
+
+                                        <Button x:Name="BtnToggleNightLight" Grid.Row="0" Grid.Column="2" Style="{DynamicResource IslandButton}"
+                                                Width="34" Height="34" Click="BtnToggleNightLight_Click" ToolTip="Display &amp; Night Light">
+                                            <TextBlock Text="&#xE708;" FontFamily="{DynamicResource Font.Icons}" FontSize="13.5" Foreground="{DynamicResource Accent.Orange}" />
+                                        </Button>
+
+                                        <Button x:Name="BtnToggleHotspot" Grid.Row="0" Grid.Column="3" Style="{DynamicResource IslandButton}"
+                                                Width="34" Height="34" Click="BtnToggleHotspot_Click" ToolTip="Mobile Hotspot">
+                                            <TextBlock Text="&#xE88E;" FontFamily="{DynamicResource Font.Icons}" FontSize="13.5" Foreground="{DynamicResource Text.Secondary}" />
+                                        </Button>
+
+                                        <!-- Row 1: Mute, Volume Mixer, Snip, Lock PC -->
+                                        <Button x:Name="BtnToggleMute" Grid.Row="1" Grid.Column="0" Style="{DynamicResource IslandButton}"
+                                                Width="34" Height="34" Click="BtnToggleMute_Click" ToolTip="Toggle Mute / Volume">
+                                            <TextBlock x:Name="DashMuteIcon" Text="&#xE74F;" FontFamily="{DynamicResource Font.Icons}" FontSize="13.5" Foreground="{DynamicResource Text.Secondary}" />
+                                        </Button>
+
+                                        <Button x:Name="BtnToggleVolume" Grid.Row="1" Grid.Column="1" Style="{DynamicResource IslandButton}"
+                                                Width="34" Height="34" Click="BtnToggleVolume_Click" ToolTip="Open Volume Mixer">
+                                            <TextBlock Text="&#xE995;" FontFamily="{DynamicResource Font.Icons}" FontSize="13.5" Foreground="{DynamicResource Accent.Green}" />
+                                        </Button>
+
+                                        <Button x:Name="BtnToggleDashcam" Grid.Row="1" Grid.Column="2" Style="{DynamicResource IslandButton}"
+                                                Width="34" Height="34" Click="BtnToggleDashcam_Click" ToolTip="Retro Instant Camera &amp; Polaroid">
+                                            <TextBlock Text="📷" FontSize="13.5" />
+                                        </Button>
+
+                                        <Button x:Name="BtnToggleLock" Grid.Row="1" Grid.Column="3" Style="{DynamicResource IslandButton}"
+                                                Width="34" Height="34" Click="BtnToggleLock_Click" ToolTip="Lock Computer">
+                                            <TextBlock Text="&#xE72E;" FontFamily="{DynamicResource Font.Icons}" FontSize="13.5" Foreground="{DynamicResource Accent.Red}" />
+                                        </Button>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+
+                            <!-- 3. QUICK APPS (Grid 3x2) -->
+                            <Border Grid.Column="2" Background="#1AFFFFFF" CornerRadius="12" Padding="8,8" Margin="0,0,8,0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="🚀 APPS" FontFamily="{DynamicResource Font.Text}"
+                                               FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Text.Tertiary}" Margin="2,0,0,4" />
+
+                                    <Grid Grid.Row="1">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*" />
+                                            <RowDefinition Height="*" />
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Row 0: Explorer, Calculator, Notepad -->
+                                        <Button x:Name="BtnAppExplorer" Grid.Row="0" Grid.Column="0" Style="{DynamicResource IslandButton}"
+                                                Padding="2" Click="BtnAppExplorer_Click" ToolTip="File Explorer">
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <TextBlock Text="📁" FontSize="13" HorizontalAlignment="Center" />
+                                                <TextBlock Text="Files" FontFamily="{DynamicResource Font.Text}" FontSize="8.5"
+                                                           Foreground="{DynamicResource Text.Secondary}" HorizontalAlignment="Center" Margin="0,1,0,0" />
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button x:Name="BtnAppCalc" Grid.Row="0" Grid.Column="1" Style="{DynamicResource IslandButton}"
+                                                Padding="2" Click="BtnLaunchCalc_Click" ToolTip="Calculator">
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <TextBlock Text="🧮" FontSize="13" HorizontalAlignment="Center" />
+                                                <TextBlock Text="Calc" FontFamily="{DynamicResource Font.Text}" FontSize="8.5"
+                                                           Foreground="{DynamicResource Text.Secondary}" HorizontalAlignment="Center" Margin="0,1,0,0" />
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button x:Name="BtnAppNotepad" Grid.Row="0" Grid.Column="2" Style="{DynamicResource IslandButton}"
+                                                Padding="2" Click="BtnLaunchNotepad_Click" ToolTip="Notepad">
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <TextBlock Text="📝" FontSize="13" HorizontalAlignment="Center" />
+                                                <TextBlock Text="Notes" FontFamily="{DynamicResource Font.Text}" FontSize="8.5"
+                                                           Foreground="{DynamicResource Text.Secondary}" HorizontalAlignment="Center" Margin="0,1,0,0" />
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- Row 1: Task Manager, Settings, Terminal -->
+                                        <Button x:Name="BtnAppTaskMgr" Grid.Row="1" Grid.Column="0" Style="{DynamicResource IslandButton}"
+                                                Padding="2" Click="BtnQuickTaskMgr_Click" ToolTip="Task Manager">
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <TextBlock Text="📊" FontSize="13" HorizontalAlignment="Center" />
+                                                <TextBlock Text="Task Mgr" FontFamily="{DynamicResource Font.Text}" FontSize="8.5"
+                                                           Foreground="{DynamicResource Text.Secondary}" HorizontalAlignment="Center" Margin="0,1,0,0" />
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button x:Name="BtnAppSettings" Grid.Row="1" Grid.Column="1" Style="{DynamicResource IslandButton}"
+                                                Padding="2" Click="BtnSettings_Click" ToolTip="Settings">
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <TextBlock Text="⚙️" FontSize="13" HorizontalAlignment="Center" />
+                                                <TextBlock Text="Settings" FontFamily="{DynamicResource Font.Text}" FontSize="8.5"
+                                                           Foreground="{DynamicResource Text.Secondary}" HorizontalAlignment="Center" Margin="0,1,0,0" />
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button x:Name="BtnAppTerminal" Grid.Row="1" Grid.Column="2" Style="{DynamicResource IslandButton}"
+                                                Padding="2" Click="BtnAppTerminal_Click" ToolTip="Terminal / PowerShell">
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <TextBlock Text="💻" FontSize="13" HorizontalAlignment="Center" />
+                                                <TextBlock Text="Terminal" FontFamily="{DynamicResource Font.Text}" FontSize="8.5"
+                                                           Foreground="{DynamicResource Text.Secondary}" HorizontalAlignment="Center" Margin="0,1,0,0" />
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+
+                            <!-- 4. DAY PROGRESS & COUNTDOWN (Matches Image 2 right) -->
+                            <Border Grid.Column="3" Background="#1AFFFFFF" CornerRadius="12" Padding="10,8" Margin="0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Header -->
+                                    <StackPanel Grid.Row="0" Orientation="Horizontal">
+                                        <TextBlock Text="&#xE787;" FontFamily="{DynamicResource Font.Icons}" FontSize="9.5"
+                                                   Foreground="{DynamicResource Accent.Blue}" VerticalAlignment="Center" Margin="0,0,4,0" />
+                                        <TextBlock Text="DAY" FontFamily="{DynamicResource Font.Text}"
+                                                   FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Text.Tertiary}"
+                                                   VerticalAlignment="Center" />
+                                    </StackPanel>
+
+                                    <!-- Percentage -->
+                                    <TextBlock x:Name="DashDayPercent" Grid.Row="1" Text="16%" FontFamily="{DynamicResource Font.Display}"
+                                               FontSize="22" FontWeight="Bold" Foreground="{DynamicResource Text.Primary}" Margin="0,2,0,2" />
+
+                                    <!-- Progress Bar -->
+                                    <ProgressBar x:Name="DashDayProgressBar" Grid.Row="2" Height="4"
+                                                 Minimum="0" Maximum="100" Value="16"
+                                                 Foreground="{DynamicResource Accent.Blue}" Background="{DynamicResource Fill.Track}"
+                                                 BorderThickness="0" Margin="0,3,0,5" />
+
+                                    <!-- Countdown until bedtime / midnight -->
+                                    <TextBlock x:Name="DashBedtimeCountdown" Grid.Row="3" Text="13h 26m until bedtime"
+                                               FontFamily="{DynamicResource Font.Text}" FontSize="9.5"
+                                               Foreground="{DynamicResource Text.Tertiary}" TextTrimming="CharacterEllipsis" VerticalAlignment="Top" />
+
+                                    <!-- Clock & Short Date -->
+                                    <TextBlock x:Name="DashDigitalClock" Grid.Row="4" Text="09:34 24 Oct"
+                                               FontFamily="{DynamicResource Font.Text}" FontSize="10" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource Text.Secondary}" VerticalAlignment="Bottom" Margin="0,2,0,0" />
+                                </Grid>
+                            </Border>
+                        </Grid>
+
+                        <!-- ROW 1: Screen Brightness & Speaker Volume Hardware Controls -->
+                        <Grid Grid.Row="1" Margin="0,7,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- 1. DISPLAY BRIGHTNESS CARD -->
+                            <Border Grid.Column="0" Background="#1AFFFFFF" CornerRadius="12" Padding="10,6" Height="38">
+                                <Grid VerticalAlignment="Center">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Brightness Icon Button -->
+                                    <Button Grid.Column="0" Style="{DynamicResource IslandButton}" Width="26" Height="26"
+                                            Click="BtnDashBrightness_Click" ToolTip="Screen Brightness">
+                                        <TextBlock Text="&#xE706;" FontFamily="{DynamicResource Font.Icons}" FontSize="12.5"
+                                                   Foreground="{DynamicResource Accent.Yellow}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                    </Button>
+
+                                    <!-- Brightness Slider -->
+                                    <Slider x:Name="SliderBrightness" Grid.Column="1" Style="{DynamicResource AppleBrightnessSlider}"
+                                            Minimum="0" Maximum="100" Value="80" Margin="8,0,8,0"
+                                            ValueChanged="SliderBrightness_ValueChanged" ToolTip="Adjust Screen Brightness" />
+
+                                    <!-- Brightness Readout -->
+                                    <TextBlock x:Name="DashBrightnessVal" Grid.Column="2" Text="80%"
+                                               FontFamily="{DynamicResource Font.Text}" FontSize="11" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource Text.Secondary}" VerticalAlignment="Center" Width="32" TextAlignment="Right" />
+                                </Grid>
+                            </Border>
+
+                            <!-- 2. SPEAKER VOLUME CARD -->
+                            <Border Grid.Column="2" Background="#1AFFFFFF" CornerRadius="12" Padding="10,6" Height="38">
+                                <Grid VerticalAlignment="Center">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Volume / Mute Button -->
+                                    <Button Grid.Column="0" Style="{DynamicResource IslandButton}" Width="26" Height="26"
+                                            Click="BtnDashVolumeMute_Click" ToolTip="Click to Mute / Unmute">
+                                        <TextBlock x:Name="DashVolumeIcon" Text="&#xE767;" FontFamily="{DynamicResource Font.Icons}" FontSize="12.5"
+                                                   Foreground="{DynamicResource Accent.Blue}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                    </Button>
+
+                                    <!-- Volume Slider -->
+                                    <Slider x:Name="SliderVolume" Grid.Column="1" Style="{DynamicResource AppleVolumeSlider}"
+                                            Minimum="0" Maximum="100" Value="50" Margin="8,0,8,0"
+                                            ValueChanged="SliderVolume_ValueChanged" ToolTip="Adjust Speaker Volume" />
+
+                                    <!-- Volume Readout -->
+                                    <TextBlock x:Name="DashVolumeVal" Grid.Column="2" Text="50%"
+                                               FontFamily="{DynamicResource Font.Text}" FontSize="11" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource Text.Secondary}" VerticalAlignment="Center" Width="32" TextAlignment="Right" />
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Grid>
+
+                        <!-- SUBPAGE: Media Controls (Compact & Cleanly Spaced above Bottom Bezel) -->
+                        <!-- SUBPAGE: Media Controls (with Live Synced Auto Lyrics) -->
+                        <Grid x:Name="SubpageMedia" Grid.Row="1" Visibility="Visible" Margin="0,0,0,10" VerticalAlignment="Stretch">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <!-- Top: Artwork + Song Details + Lyrics Mode Toggle Button -->
+                            <Grid Grid.Row="0" Margin="18,2,18,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Album Artwork -->
+                                <Border Grid.Column="0" Width="52" Height="52" CornerRadius="10" ClipToBounds="True"
+                                        Background="{DynamicResource Fill.Placeholder}" Margin="0,0,12,0">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="10" ShadowDepth="2" Direction="270"
+                                                          Color="Black" Opacity="0.4" />
+                                    </Border.Effect>
+                                    <Grid>
+                                        <Image x:Name="ExpandedArtwork" Stretch="UniformToFill" />
+                                        <TextBlock x:Name="ExpandedArtworkFallback" Text="&#xE8D6;"
+                                                   FontFamily="{DynamicResource Font.Icons}" FontSize="22"
+                                                   Foreground="{DynamicResource Text.Tertiary}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+
+                                <!-- Title, Artist, App -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock x:Name="ExpandedTrackTitle" Text="No Media Playing"
+                                               FontFamily="{DynamicResource Font.Display}" FontSize="13.5" FontWeight="Bold"
+                                               Foreground="{DynamicResource Text.Primary}" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock x:Name="ExpandedArtist" Text="Start playback on Spotify, YouTube, or Edge"
+                                               FontFamily="{DynamicResource Font.Text}" FontSize="11"
+                                               Foreground="{DynamicResource Text.Secondary}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
+                                    <TextBlock x:Name="ExpandedAppName" Text="Windows Dynamic Island"
+                                               FontFamily="{DynamicResource Font.Text}" FontSize="9.5"
+                                               Foreground="{DynamicResource Text.Tertiary}" Margin="0,2,0,0" />
+                                </StackPanel>
+
+                                <!-- Lyrics Mode Toggle Button -->
+                                <Button x:Name="BtnToggleLyrics" Grid.Column="2" Style="{DynamicResource IslandButton}" Width="30" Height="30"
+                                        VerticalAlignment="Center" Click="BtnToggleLyrics_Click" ToolTip="Tampilkan / Sembunyikan Lirik Karaoke">
+                                    <TextBlock x:Name="IconLyricsToggle" Text="🎤" FontSize="13" Foreground="{DynamicResource Accent.Yellow}" />
+                                </Button>
+                            </Grid>
+
+                            <!-- Middle: Interactive Timeline Scrubber & Timestamps -->
+                            <Grid Grid.Row="1" Margin="18,1,18,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <!-- Interactive Scrubber Track (Memajukan / Memundurkan Durasi Musik) -->
+                                <Grid x:Name="TimelineScrubberContainer" Grid.Row="0" Height="20" Margin="0,-3,0,1"
+                                      Cursor="Hand" Background="#01000000" ClipToBounds="False"
+                                      PreviewMouseLeftButtonDown="TimelineScrubber_MouseDown"
+                                      PreviewMouseMove="TimelineScrubber_MouseMove"
+                                      PreviewMouseLeftButtonUp="TimelineScrubber_MouseUp"
+                                      MouseEnter="TimelineScrubber_MouseEnter"
+                                      MouseLeave="TimelineScrubber_MouseLeave"
+                                      ToolTip="Klik atau seret untuk memajukan / memundurkan durasi lagu">
+                                    
+                                    <!-- Background Bar Track -->
+                                    <Border Height="4" VerticalAlignment="Center" CornerRadius="2"
+                                            Background="{DynamicResource Fill.Track}" ClipToBounds="True">
+                                        <ProgressBar x:Name="ExpandedProgressBar" Height="4"
+                                                     Minimum="0" Maximum="100" Value="0"
+                                                     Foreground="{DynamicResource Accent.Yellow}" Background="Transparent"
+                                                     BorderThickness="0" IsHitTestVisible="False" />
+                                    </Border>
+
+                                    <!-- Sleek Scrubber Thumb Dot (Apple Music / Dynamic Island style) -->
+                                    <Canvas HorizontalAlignment="Stretch" VerticalAlignment="Stretch" IsHitTestVisible="False">
+                                        <Ellipse x:Name="TimelineScrubberThumb" Width="10" Height="10" Fill="#FFFFFF"
+                                                 Canvas.Left="0" Canvas.Top="5" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                                            <Ellipse.RenderTransform>
+                                                <ScaleTransform x:Name="ScrubberThumbScale" ScaleX="0.8" ScaleY="0.8" />
+                                            </Ellipse.RenderTransform>
+                                            <Ellipse.Effect>
+                                                <DropShadowEffect BlurRadius="4" ShadowDepth="1" Direction="270" Color="#000000" Opacity="0.45" />
+                                            </Ellipse.Effect>
+                                        </Ellipse>
+                                    </Canvas>
+                                </Grid>
+
+                                <Grid Grid.Row="1">
+                                    <TextBlock x:Name="ExpandedPositionText" Text="0:00"
+                                               FontFamily="{DynamicResource Font.Text}" FontSize="10"
+                                               Foreground="{DynamicResource Text.Tertiary}" HorizontalAlignment="Left" />
+                                    <TextBlock x:Name="ExpandedDurationText" Text="0:00"
+                                               FontFamily="{DynamicResource Font.Text}" FontSize="10"
+                                               Foreground="{DynamicResource Text.Tertiary}" HorizontalAlignment="Right" />
+                                </Grid>
+                            </Grid>
+
+                            <!-- Live Synchronized Lyrics Card / Banner with Click-to-Seek Support -->
+                            <Border x:Name="MediaLyricsContainer" Grid.Row="2" Background="#14FFFFFF" CornerRadius="10"
+                                    Padding="10,4" Margin="18,2,18,4"
+                                    ClipToBounds="True" PreviewMouseWheel="MediaLyricsContainer_MouseWheel">
+                                <Grid ClipToBounds="True">
+                                    <!-- View A: Compact Single-Line Live Ticker (Click to Seek) -->
+                                    <Grid x:Name="LyricsCompactView" ClipToBounds="True" Cursor="Hand"
+                                          PreviewMouseLeftButtonDown="CompactLyric_Click"
+                                          MouseLeftButtonUp="CompactLyric_Click" ToolTip="Klik untuk melompat (seek) ke waktu lirik ini">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="🎵" FontSize="11" Foreground="{DynamicResource Accent.Yellow}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                        <Grid Grid.Column="1" ClipToBounds="True">
+                                            <TextBlock x:Name="MediaLiveLyricText" Text="🎵 Menunggu pemutaran musik..."
+                                                       FontFamily="{DynamicResource Font.Text}" FontSize="11.5" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource Text.Primary}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center">
+                                                <TextBlock.RenderTransform>
+                                                    <TranslateTransform x:Name="CompactLyricTranslate" X="0" Y="0" />
+                                                </TextBlock.RenderTransform>
+                                            </TextBlock>
+                                        </Grid>
+                                    </Grid>
+
+                                    <!-- View B: Multi-Line Karaoke Stream (Apple Music Sing style with Click-to-Seek on each line) -->
+                                    <StackPanel x:Name="LyricsFullView" Visibility="Collapsed" HorizontalAlignment="Center" ClipToBounds="True">
+                                        <!-- Previous Line (Click to Seek Backward) -->
+                                        <Border x:Name="LyricPrevCard" Cursor="Hand" Padding="6,1.5" CornerRadius="5"
+                                                PreviewMouseLeftButtonDown="MediaLyricPrev_Click"
+                                                MouseLeftButtonUp="MediaLyricPrev_Click" ToolTip="Lompat mundur ke lirik sebelumnya">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="Transparent" />
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                             <Setter Property="Background" Value="#22FFFFFF" />
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock x:Name="MediaLyricPrev" Text="" FontFamily="{DynamicResource Font.Text}"
+                                                       FontSize="10" Foreground="#66FFFFFF" TextAlignment="Center" TextTrimming="CharacterEllipsis">
+                                                <TextBlock.RenderTransform>
+                                                    <TranslateTransform x:Name="PrevLyricTranslate" X="0" Y="0" />
+                                                </TextBlock.RenderTransform>
+                                            </TextBlock>
+                                        </Border>
+
+                                        <!-- Current Line (Click to Replay / Seek to Line Start) -->
+                                        <Border x:Name="LyricCurrentCard" Cursor="Hand" Padding="6,1.5" CornerRadius="5"
+                                                PreviewMouseLeftButtonDown="MediaLyricCurrent_Click"
+                                                MouseLeftButtonUp="MediaLyricCurrent_Click" ToolTip="Ulangi baris lirik saat ini">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="#18FFFFFF" />
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="#30FFFFFF" />
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock x:Name="MediaLyricCurrent" Text="🎵 Lirik Otomatis" FontFamily="{DynamicResource Font.Display}"
+                                                       FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Accent.Yellow}" TextAlignment="Center" TextWrapping="Wrap">
+                                                <TextBlock.RenderTransform>
+                                                    <TranslateTransform x:Name="CurrentLyricTranslate" X="0" Y="0" />
+                                                </TextBlock.RenderTransform>
+                                            </TextBlock>
+                                        </Border>
+
+                                        <!-- Next Line (Click to Seek Forward) -->
+                                        <Border x:Name="LyricNextCard" Cursor="Hand" Padding="6,1.5" CornerRadius="5"
+                                                PreviewMouseLeftButtonDown="MediaLyricNext_Click"
+                                                MouseLeftButtonUp="MediaLyricNext_Click" ToolTip="Lompat maju ke lirik ini">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="Transparent" />
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="#22FFFFFF" />
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock x:Name="MediaLyricNext" Text="" FontFamily="{DynamicResource Font.Text}"
+                                                       FontSize="10" Foreground="#77FFFFFF" TextAlignment="Center" TextTrimming="CharacterEllipsis">
+                                                <TextBlock.RenderTransform>
+                                                    <TranslateTransform x:Name="NextLyricTranslate" X="0" Y="0" />
+                                                </TextBlock.RenderTransform>
+                                            </TextBlock>
+                                        </Border>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <!-- Bottom: Playback Buttons with Generous Bottom Clearance (Protected from bottom bezel cutoff) -->
+                            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,4,0,8">
+                                <Button x:Name="BtnPrevTrack" Style="{DynamicResource IslandButton}" Width="36" Height="36"
+                                        Margin="0,0,16,0" Click="BtnPrevTrack_Click" ToolTip="Previous Track">
+                                    <TextBlock Text="&#xE892;" FontFamily="{DynamicResource Font.Icons}" FontSize="15" />
+                                </Button>
+                                <Button x:Name="BtnPlayPause" Style="{DynamicResource IslandButton}" Width="44" Height="44"
+                                        Background="{DynamicResource Fill.Hover}" Click="BtnPlayPause_Click" ToolTip="Play / Pause">
+                                    <TextBlock x:Name="PlayPauseGlyph" Text="&#xE768;" FontFamily="{DynamicResource Font.Icons}" FontSize="18" />
+                                </Button>
+                                <Button x:Name="BtnNextTrack" Style="{DynamicResource IslandButton}" Width="36" Height="36"
+                                        Margin="16,0,0,0" Click="BtnNextTrack_Click" ToolTip="Next Track">
+                                    <TextBlock Text="&#xE893;" FontFamily="{DynamicResource Font.Icons}" FontSize="15" />
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- SUBPAGE: Retro Instant Camera Viewfinder & Polaroid Capture -->
+                        <Grid x:Name="SubpageCamera" Grid.Row="1" Visibility="Collapsed" HorizontalAlignment="Center" Width="384" Margin="0,0,0,10" VerticalAlignment="Top">
+                            <!-- Camera Body Shell (Adapts harmoniously to current theme!) -->
+                            <Border CornerRadius="16" BorderBrush="{DynamicResource Camera.BodyEdge}" BorderThickness="1.2" Padding="8,6,8,6"
+                                    Background="{DynamicResource Camera.Body}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <!-- 1. Full-Width Viewfinder with Focused 1:1 Center & Seamlessly Feathered Flanks -->
+                                    <Border Grid.Row="0" Margin="0,0,0,6" Width="368" Height="168" CornerRadius="14" ClipToBounds="True"
+                                            Background="#0A0B0E" BorderBrush="{DynamicResource Camera.BodyEdge}" BorderThickness="1.5">
+                                        <Grid>
+                                            <!-- Full-Width Blurred Camera Underlay (covers 368x168 with gentle bokeh blur) -->
+                                            <Image x:Name="CameraPreviewBlurImage" Stretch="UniformToFill">
+                                                <Image.Effect>
+                                                    <BlurEffect Radius="16" KernelType="Gaussian" RenderingBias="Performance" />
+                                                </Image.Effect>
+                                            </Image>
+
+                                            <!-- Seamless Flank Soft Vignette (no dividing lines, pure seamless feathering) -->
+                                            <Border HorizontalAlignment="Stretch" VerticalAlignment="Stretch" IsHitTestVisible="False">
+                                                <Border.Background>
+                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                        <GradientStop Color="#5505070B" Offset="0.0" />
+                                                        <GradientStop Color="#2005070B" Offset="0.18" />
+                                                        <GradientStop Color="#0005070B" Offset="0.29" />
+                                                        <GradientStop Color="#0005070B" Offset="0.71" />
+                                                        <GradientStop Color="#2005070B" Offset="0.82" />
+                                                        <GradientStop Color="#5505070B" Offset="1.0" />
+                                                    </LinearGradientBrush>
+                                                </Border.Background>
+                                            </Border>
+
+                                            <!-- Focused 1:1 Center Camera (Pin-sharp center, feathered smoothly into blur on sides) -->
+                                            <Image x:Name="CameraPreviewImage" Stretch="UniformToFill">
+                                                <Image.OpacityMask>
+                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                        <GradientStop Color="#00000000" Offset="0.0" />
+                                                        <GradientStop Color="#00000000" Offset="0.14" />
+                                                        <GradientStop Color="#FF000000" Offset="0.29" />
+                                                        <GradientStop Color="#FF000000" Offset="0.71" />
+                                                        <GradientStop Color="#00000000" Offset="0.86" />
+                                                        <GradientStop Color="#00000000" Offset="1.0" />
+                                                    </LinearGradientBrush>
+                                                </Image.OpacityMask>
+                                            </Image>
+
+                                            <!-- Top Center Camera Lens Pinhole Dot -->
+                                            <Border HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,5,0,0"
+                                                    Width="7" Height="7" CornerRadius="3.5" Background="#000000" BorderBrush="#374151" BorderThickness="1">
+                                                <Ellipse Width="2.5" Height="2.5" Fill="#3B82F6" />
+                                            </Border>
+
+                                            <!-- Camera Flash Overlay Effect -->
+                                            <Border x:Name="ViewfinderFlash" Background="#FFFFFF" Opacity="0" IsHitTestVisible="False" />
+
+                                            <!-- Bottom Viewfinder HUD (Posisi semula di pojok kiri bawah & pojok kanan bawah) -->
+                                            <Grid Margin="12,8" VerticalAlignment="Bottom" IsHitTestVisible="False">
+                                                <!-- Pojok Kiri Bawah: Status Live & Filter Aktif -->
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                    <TextBlock Text="● LIVE" FontSize="9" FontWeight="Bold" Foreground="#22C55E" VerticalAlignment="Center" />
+                                                    <TextBlock x:Name="CameraModeText" Text=" • WARM 90s" FontSize="8.5" FontWeight="SemiBold" Foreground="#E2E8F0" Opacity="0.9" VerticalAlignment="Center" />
+                                                </StackPanel>
+
+                                                <!-- Pojok Kanan Bawah: Vintage amber glowing date stamp -->
+                                                <TextBlock x:Name="RetroDateReadout" Text="'26 10 25" FontSize="10.5" FontWeight="Bold"
+                                                           FontFamily="Consolas, Courier New, Segoe UI" Foreground="#F59E0B" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                    <TextBlock.Effect>
+                                                        <DropShadowEffect BlurRadius="4" ShadowDepth="0" Color="#F59E0B" Opacity="0.6" />
+                                                    </TextBlock.Effect>
+                                                </TextBlock>
+                                            </Grid>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- 2. Retro Control Bar: Active Filter Badge, Shutter, Gallery -->
+                                    <Grid Grid.Row="1" Margin="2,6,2,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Left: Active Filter Badge Indicator -->
+                                        <Border Grid.Column="0" HorizontalAlignment="Left" Background="#14FFFFFF" CornerRadius="12" Padding="7,3"
+                                                BorderBrush="{DynamicResource Camera.BodyEdge}" BorderThickness="1">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock x:Name="FilterIconEmoji" Text="🎞️" FontSize="10" Margin="0,0,4,0" VerticalAlignment="Center" />
+                                                <TextBlock x:Name="FilterLabelText" Text="Warm 90s" FontSize="9.5" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource Text.Primary}" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- Center: Big Retro Shutter Button (Mechanical Chrome/Rim) -->
+                                        <Border Grid.Column="1" CornerRadius="18" Background="{DynamicResource Fill.Track}" Padding="2.5"
+                                                BorderBrush="{DynamicResource Camera.BodyEdge}" BorderThickness="1">
+                                            <Button x:Name="BtnCaptureRetroPhoto" Style="{DynamicResource IslandButton}" Height="30" MinWidth="96" Padding="14,0"
+                                                    Background="{DynamicResource Island.Background.Solid}" Click="BtnCaptureRetroPhoto_Click"
+                                                    ToolTip="Ambil Foto &amp; Cetak Lembaran Polaroid">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                    <Ellipse Width="8" Height="8" Fill="{DynamicResource Accent.Red}" Margin="0,0,5,0" />
+                                                    <TextBlock Text="SHUTTER" FontFamily="{DynamicResource Font.Text}" FontSize="10" FontWeight="ExtraBold"
+                                                               Foreground="{DynamicResource Text.Primary}" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+
+                                        <!-- Right: Open Pictures Folder Button -->
+                                        <Button x:Name="BtnOpenPicturesFolder" Grid.Column="2" Style="{DynamicResource IslandButton}"
+                                                HorizontalAlignment="Right" Padding="8,4" Click="BtnOpenPicturesFolder_Click" ToolTip="Buka Folder Foto (Pictures\WindowsDynamicIsland)">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="🖼️" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center" />
+                                                <TextBlock Text="Galeri" FontSize="9.5" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource Text.Primary}" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
+
+                                    <!-- 3. macOS Photo Booth Style Live Filter Presets Strip -->
+                                    <Grid Grid.Row="2" Margin="0,0,0,2">
+                                        <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled"
+                                                      Focusable="False">
+                                            <StackPanel x:Name="CameraFilterCardsPanel" Orientation="Horizontal" HorizontalAlignment="Center" Margin="1,0,1,0">
+                                                <!-- 1. Original / Normal -->
+                                                <Border x:Name="CardFilter_Normal" Tag="Normal" CornerRadius="8" Background="#14FFFFFF"
+                                                        BorderBrush="#33FFFFFF" BorderThickness="1" Width="56" Height="58" Margin="0,0,6,0"
+                                                        Cursor="Hand" MouseLeftButtonUp="FilterPresetCard_Click" ToolTip="Original (Clean / Natural)">
+                                                    <Grid Margin="2">
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="36" />
+                                                            <RowDefinition Height="16" />
+                                                        </Grid.RowDefinitions>
+                                                        <Border Grid.Row="0" CornerRadius="5" ClipToBounds="True" Background="#050508">
+                                                            <Image x:Name="FilterThumb_Normal" Stretch="UniformToFill" />
+                                                        </Border>
+                                                        <TextBlock Grid.Row="1" Text="Original" FontSize="8.5" FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource Text.Primary}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    </Grid>
+                                                </Border>
+
+                                                <!-- 2. Warm 90s -->
+                                                <Border x:Name="CardFilter_Warm90s" Tag="Warm90s" CornerRadius="8" Background="#14FFFFFF"
+                                                        BorderBrush="#3B82F6" BorderThickness="2" Width="56" Height="58" Margin="0,0,6,0"
+                                                        Cursor="Hand" MouseLeftButtonUp="FilterPresetCard_Click" ToolTip="Warm 90s (Vintage Amber Cafe Tone)">
+                                                    <Grid Margin="2">
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="36" />
+                                                            <RowDefinition Height="16" />
+                                                        </Grid.RowDefinitions>
+                                                        <Border Grid.Row="0" CornerRadius="5" ClipToBounds="True" Background="#050508">
+                                                            <Image x:Name="FilterThumb_Warm90s" Stretch="UniformToFill" />
+                                                        </Border>
+                                                        <TextBlock Grid.Row="1" Text="Warm 90s" FontSize="8.5" FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource Text.Primary}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    </Grid>
+                                                </Border>
+
+                                                <!-- 3. Cyberpunk -->
+                                                <Border x:Name="CardFilter_Cyberpunk" Tag="Cyberpunk" CornerRadius="8" Background="#14FFFFFF"
+                                                        BorderBrush="#33FFFFFF" BorderThickness="1" Width="56" Height="58" Margin="0,0,6,0"
+                                                        Cursor="Hand" MouseLeftButtonUp="FilterPresetCard_Click" ToolTip="Cyberpunk (Neon Cyan &amp; Magenta)">
+                                                    <Grid Margin="2">
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="36" />
+                                                            <RowDefinition Height="16" />
+                                                        </Grid.RowDefinitions>
+                                                        <Border Grid.Row="0" CornerRadius="5" ClipToBounds="True" Background="#050508">
+                                                            <Image x:Name="FilterThumb_Cyberpunk" Stretch="UniformToFill" />
+                                                        </Border>
+                                                        <TextBlock Grid.Row="1" Text="Cyber" FontSize="8.5" FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource Text.Primary}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    </Grid>
+                                                </Border>
+
+                                                <!-- 4. Monochrome / B&W -->
+                                                <Border x:Name="CardFilter_Monochrome" Tag="Monochrome" CornerRadius="8" Background="#14FFFFFF"
+                                                        BorderBrush="#33FFFFFF" BorderThickness="1" Width="56" Height="58" Margin="0,0,6,0"
+                                                        Cursor="Hand" MouseLeftButtonUp="FilterPresetCard_Click" ToolTip="B&amp;W Film (Classic Noir)">
+                                                    <Grid Margin="2">
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="36" />
+                                                            <RowDefinition Height="16" />
+                                                        </Grid.RowDefinitions>
+                                                        <Border Grid.Row="0" CornerRadius="5" ClipToBounds="True" Background="#050508">
+                                                            <Image x:Name="FilterThumb_Monochrome" Stretch="UniformToFill" />
+                                                        </Border>
+                                                        <TextBlock Grid.Row="1" Text="B&amp;W Film" FontSize="8.5" FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource Text.Primary}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    </Grid>
+                                                </Border>
+
+                                                <!-- 5. Sepia '70 -->
+                                                <Border x:Name="CardFilter_Sepia" Tag="Sepia" CornerRadius="8" Background="#14FFFFFF"
+                                                        BorderBrush="#33FFFFFF" BorderThickness="1" Width="56" Height="58" Margin="0,0,6,0"
+                                                        Cursor="Hand" MouseLeftButtonUp="FilterPresetCard_Click" ToolTip="Sepia '70 (Warm Golden Nostalgia)">
+                                                    <Grid Margin="2">
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="36" />
+                                                            <RowDefinition Height="16" />
+                                                        </Grid.RowDefinitions>
+                                                        <Border Grid.Row="0" CornerRadius="5" ClipToBounds="True" Background="#050508">
+                                                            <Image x:Name="FilterThumb_Sepia" Stretch="UniformToFill" />
+                                                        </Border>
+                                                        <TextBlock Grid.Row="1" Text="Sepia '70" FontSize="8.5" FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource Text.Primary}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    </Grid>
+                                                </Border>
+
+                                                <!-- 6. Vibrant / Vivid -->
+                                                <Border x:Name="CardFilter_Vibrant" Tag="Vibrant" CornerRadius="8" Background="#14FFFFFF"
+                                                        BorderBrush="#33FFFFFF" BorderThickness="1" Width="56" Height="58" Margin="0,0,2,0"
+                                                        Cursor="Hand" MouseLeftButtonUp="FilterPresetCard_Click" ToolTip="Vivid (Punchy Rich Colors)">
+                                                    <Grid Margin="2">
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="36" />
+                                                            <RowDefinition Height="16" />
+                                                        </Grid.RowDefinitions>
+                                                        <Border Grid.Row="0" CornerRadius="5" ClipToBounds="True" Background="#050508">
+                                                            <Image x:Name="FilterThumb_Vibrant" Stretch="UniformToFill" />
+                                                        </Border>
+                                                        <TextBlock Grid.Row="1" Text="Vivid" FontSize="8.5" FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource Text.Primary}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    </Grid>
+                                                </Border>
+                                            </StackPanel>
+                                        </ScrollViewer>
+                                    </Grid>
+
+                                    <!-- 4. Mechanical Paper Ejection Bezel Slot Line -->
+                                    <Border Grid.Row="3" HorizontalAlignment="Center" Margin="0,5,0,0" Width="180" Height="2.5"
+                                            Background="#08080A" CornerRadius="1.2" BorderBrush="#22252F" BorderThickness="0.8">
+                                        <Border.Effect>
+                                            <DropShadowEffect BlurRadius="3" ShadowDepth="1" Direction="270" Color="#000000" Opacity="0.8" />
+                                        </Border.Effect>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </Grid>
+
+                        <!-- SUBPAGE: System Monitors (Compact & Balanced Spacing) -->
+                        <Grid x:Name="SubpageSystem" Grid.Row="1" Visibility="Collapsed" Margin="16,0,16,12" VerticalAlignment="Center">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="1.2*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- CPU Gauge -->
+                            <StackPanel Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Grid Width="50" Height="50">
+                                    <controls:RingGauge x:Name="CpuGauge" Value="24" Thickness="4.5"
+                                                        RingBrush="{DynamicResource Accent.Blue}" TrackBrush="{DynamicResource Fill.Track}" />
+                                    <TextBlock x:Name="CpuText" Text="24%"
+                                               FontFamily="{DynamicResource Font.Display}" FontSize="12" FontWeight="Bold"
+                                               Foreground="{DynamicResource Text.Primary}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Grid>
+                                <TextBlock Text="CPU" FontFamily="{DynamicResource Font.Text}" FontSize="10" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource Text.Secondary}" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                            </StackPanel>
+
+                            <!-- RAM Gauge -->
+                            <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Grid Width="50" Height="50">
+                                    <controls:RingGauge x:Name="RamGauge" Value="52" Thickness="4.5"
+                                                        RingBrush="{DynamicResource Accent.Green}" TrackBrush="{DynamicResource Fill.Track}" />
+                                    <TextBlock x:Name="RamText" Text="52%"
+                                               FontFamily="{DynamicResource Font.Display}" FontSize="12" FontWeight="Bold"
+                                               Foreground="{DynamicResource Text.Primary}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Grid>
+                                <TextBlock Text="MEMORY" FontFamily="{DynamicResource Font.Text}" FontSize="10" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource Text.Secondary}" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                            </StackPanel>
+
+                            <!-- Battery & Network Column -->
+                            <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="8,0,0,0">
+                                <!-- Battery Card -->
+                                <Border Background="{DynamicResource Fill.Hover}" CornerRadius="8" Padding="8,5" Margin="0,0,0,5">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <controls:BatteryGlyph x:Name="SystemBatteryGlyph" Grid.Column="0" Width="20" Height="10"
+                                                               VerticalAlignment="Center" Margin="0,0,6,0"
+                                                               FillBrush="{DynamicResource Accent.Green}" OutlineBrush="{DynamicResource Text.Tertiary}" />
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock x:Name="SystemBatteryPercent" Text="88%"
+                                                       FontFamily="{DynamicResource Font.Text}" FontSize="11" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource Text.Primary}" />
+                                            <TextBlock x:Name="SystemBatteryStatus" Text="AC Power"
+                                                       FontFamily="{DynamicResource Font.Text}" FontSize="9"
+                                                       Foreground="{DynamicResource Text.Tertiary}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Network Card -->
+                                <Border Background="{DynamicResource Fill.Hover}" CornerRadius="8" Padding="8,5">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock x:Name="SystemNetworkIcon" Grid.Column="0" Text="&#xE701;"
+                                                   FontFamily="{DynamicResource Font.Icons}" FontSize="13"
+                                                   Foreground="{DynamicResource Accent.Blue}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock x:Name="SystemNetworkStatus" Text="Connected"
+                                                       FontFamily="{DynamicResource Font.Text}" FontSize="11" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource Text.Primary}" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock x:Name="SystemNetworkName" Text="Wi-Fi"
+                                                       FontFamily="{DynamicResource Font.Text}" FontSize="9"
+                                                       Foreground="{DynamicResource Text.Tertiary}" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- SUBPAGE: Clock & Shortcuts (Elevated and balanced) -->
+                        <Grid x:Name="SubpageClock" Grid.Row="1" Visibility="Collapsed" Margin="16,2,16,22" VerticalAlignment="Top">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock x:Name="ExpandedClockTime" Text="12:00:00"
+                                           FontFamily="{DynamicResource Font.Display}" FontSize="36" FontWeight="Bold"
+                                           Foreground="{DynamicResource Text.Primary}" HorizontalAlignment="Center" Margin="0,0,0,2" />
+                                <TextBlock x:Name="ExpandedClockDate" Text="Saturday, 24 October 2026"
+                                           FontFamily="{DynamicResource Font.Text}" FontSize="12"
+                                           Foreground="{DynamicResource Text.Secondary}" HorizontalAlignment="Center" Margin="0,0,0,14" />
+
+                                <!-- Quick actions with modern capsule styling -->
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Border Background="{DynamicResource Fill.Hover}" CornerRadius="12" Margin="0,0,8,0">
+                                        <Button x:Name="BtnQuickClipboard" Style="{DynamicResource IslandButton}"
+                                                Padding="12,6" Click="BtnQuickClipboard_Click" ToolTip="Open Clipboard History (Win+V)">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xE77F;" FontFamily="{DynamicResource Font.Icons}" FontSize="12" Margin="0,0,6,0" />
+                                                <TextBlock Text="Clipboard" FontFamily="{DynamicResource Font.Text}" FontSize="11" />
+                                            </StackPanel>
+                                        </Button>
+                                    </Border>
+
+                                    <Border Background="{DynamicResource Fill.Hover}" CornerRadius="12" Margin="0,0,8,0">
+                                        <Button x:Name="BtnQuickTaskMgr" Style="{DynamicResource IslandButton}"
+                                                Padding="12,6" Click="BtnQuickTaskMgr_Click" ToolTip="Open Task Manager">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xE9F9;" FontFamily="{DynamicResource Font.Icons}" FontSize="12" Margin="0,0,6,0" />
+                                                <TextBlock Text="Tasks" FontFamily="{DynamicResource Font.Text}" FontSize="11" />
+                                            </StackPanel>
+                                        </Button>
+                                    </Border>
+
+                                    <Border Background="{DynamicResource Fill.Hover}" CornerRadius="12">
+                                        <Button x:Name="BtnQuickSettings" Style="{DynamicResource IslandButton}"
+                                                Padding="12,6" Click="BtnQuickSettings_Click" ToolTip="Open Settings">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xE713;" FontFamily="{DynamicResource Font.Icons}" FontSize="12" Margin="0,0,6,0" />
+                                                <TextBlock Text="Settings" FontFamily="{DynamicResource Font.Text}" FontSize="11" />
+                                            </StackPanel>
+                                        </Button>
+                                    </Border>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- SUBPAGE: Tools & Interactive Stopwatch -->
+                        <Grid x:Name="SubpageTools" Grid.Row="1" Visibility="Collapsed" Margin="16,2,16,16" VerticalAlignment="Top">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <!-- Top: Stopwatch & Countdown Card -->
+                            <Border Grid.Row="0" Background="{DynamicResource Fill.Hover}" CornerRadius="12" Padding="12,8" Margin="0,0,0,10">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Mode & Digits -->
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock x:Name="ToolsTimerModeText" Text="STOPWATCH" FontFamily="{DynamicResource Font.Text}"
+                                                       FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Accent.Blue}" Margin="0,0,8,0" />
+                                            <Button x:Name="BtnToggleTimerMode" Style="{DynamicResource IslandButton}" Click="BtnToggleTimerMode_Click"
+                                                    Padding="4,1" ToolTip="Toggle Stopwatch / 5m Focus Timer">
+                                                <TextBlock Text="&#xE8B7;" FontFamily="{DynamicResource Font.Icons}" FontSize="9.5" Foreground="{DynamicResource Text.Tertiary}" />
+                                            </Button>
+                                        </StackPanel>
+                                        <TextBlock x:Name="ToolsTimerDisplay" Text="00:00.0" FontFamily="{DynamicResource Font.Display}"
+                                                   FontSize="24" FontWeight="Bold" Foreground="{DynamicResource Text.Primary}" Margin="0,2,0,0" />
+                                    </StackPanel>
+
+                                    <!-- Controls: Play/Pause, Reset -->
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Button x:Name="BtnToolsTimerReset" Style="{DynamicResource IslandButton}" Width="32" Height="32"
+                                                Margin="0,0,6,0" Click="BtnToolsTimerReset_Click" ToolTip="Reset">
+                                            <TextBlock Text="&#xE72C;" FontFamily="{DynamicResource Font.Icons}" FontSize="13" Foreground="{DynamicResource Text.Secondary}" />
+                                        </Button>
+
+                                        <Border Background="{DynamicResource Accent.Blue}" CornerRadius="16" Width="32" Height="32">
+                                            <Button x:Name="BtnToolsTimerPlay" Style="{DynamicResource IslandButton}" Width="32" Height="32"
+                                                    Click="BtnToolsTimerPlay_Click" ToolTip="Start / Pause">
+                                                <TextBlock x:Name="ToolsTimerPlayIcon" Text="&#xE768;" FontFamily="{DynamicResource Font.Icons}"
+                                                           FontSize="12" Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Button>
+                                        </Border>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <!-- Bottom: Quick App Shortcuts Bar -->
+                            <Grid Grid.Row="1" VerticalAlignment="Center">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Border Grid.Column="0" Background="{DynamicResource Fill.Hover}" CornerRadius="10" Margin="0,0,6,0">
+                                    <Button x:Name="BtnLaunchCalc" Style="{DynamicResource IslandButton}" Padding="4,6"
+                                            Click="BtnLaunchCalc_Click" ToolTip="Open Calculator">
+                                        <StackPanel HorizontalAlignment="Center">
+                                            <TextBlock Text="&#xE8EF;" FontFamily="{DynamicResource Font.Icons}" FontSize="14" HorizontalAlignment="Center" Margin="0,0,0,2" />
+                                            <TextBlock Text="Calc" FontFamily="{DynamicResource Font.Text}" FontSize="10" HorizontalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                </Border>
+
+                                <Border Grid.Column="1" Background="{DynamicResource Fill.Hover}" CornerRadius="10" Margin="0,0,6,0">
+                                    <Button x:Name="BtnLaunchNotepad" Style="{DynamicResource IslandButton}" Padding="4,6"
+                                            Click="BtnLaunchNotepad_Click" ToolTip="Open Notepad">
+                                        <StackPanel HorizontalAlignment="Center">
+                                            <TextBlock Text="&#xE70F;" FontFamily="{DynamicResource Font.Icons}" FontSize="14" HorizontalAlignment="Center" Margin="0,0,0,2" />
+                                            <TextBlock Text="Notes" FontFamily="{DynamicResource Font.Text}" FontSize="10" HorizontalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                </Border>
+
+                                <Border Grid.Column="2" Background="{DynamicResource Fill.Hover}" CornerRadius="10" Margin="0,0,6,0">
+                                    <Button x:Name="BtnLaunchSnipping" Style="{DynamicResource IslandButton}" Padding="4,6"
+                                            Click="BtnLaunchSnipping_Click" ToolTip="Snipping Tool">
+                                        <StackPanel HorizontalAlignment="Center">
+                                            <TextBlock Text="&#xF003;" FontFamily="{DynamicResource Font.Icons}" FontSize="14" HorizontalAlignment="Center" Margin="0,0,0,2" />
+                                            <TextBlock Text="Snip" FontFamily="{DynamicResource Font.Text}" FontSize="10" HorizontalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                </Border>
+
+                                <Border Grid.Column="3" Background="{DynamicResource Fill.Hover}" CornerRadius="10">
+                                    <Button x:Name="BtnLaunchTaskMgr2" Style="{DynamicResource IslandButton}" Padding="4,6"
+                                            Click="BtnQuickTaskMgr_Click" ToolTip="Task Manager">
+                                        <StackPanel HorizontalAlignment="Center">
+                                            <TextBlock Text="&#xE9F9;" FontFamily="{DynamicResource Font.Icons}" FontSize="14" HorizontalAlignment="Center" Margin="0,0,0,2" />
+                                            <TextBlock Text="Tasks" FontFamily="{DynamicResource Font.Text}" FontSize="10" HorizontalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                </Border>
+                            </Grid>
+                        </Grid>
+
+                        <!-- SUBPAGE: Weather & Reminders -->
+                        <Grid x:Name="SubpageWeather" Grid.Row="1" Visibility="Collapsed" Margin="16,2,16,16" VerticalAlignment="Top">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1.1*" />
+                                <ColumnDefinition Width="1.4*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Left: Weather Card -->
+                            <Border Grid.Column="0" Background="{DynamicResource Fill.Hover}" CornerRadius="12" Padding="12,10" Margin="0,0,8,0">
+                                <StackPanel VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock x:Name="WeatherIcon" Text="&#xE707;" FontFamily="{DynamicResource Font.Icons}"
+                                                   FontSize="22" Foreground="{DynamicResource Accent.Yellow}" Margin="0,0,8,0" />
+                                        <TextBlock x:Name="WeatherTemp" Text="28°" FontFamily="{DynamicResource Font.Display}"
+                                                   FontSize="24" FontWeight="Bold" Foreground="{DynamicResource Text.Primary}" />
+                                    </StackPanel>
+                                    <TextBlock x:Name="WeatherCondition" Text="Partly Cloudy" FontFamily="{DynamicResource Font.Text}"
+                                               FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Text.Primary}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock x:Name="WeatherLocation" Text="Local Weather" FontFamily="{DynamicResource Font.Text}"
+                                               FontSize="10" Foreground="{DynamicResource Text.Tertiary}" Margin="0,1,0,0" />
+                                    <TextBlock x:Name="WeatherDetails" Text="H: 31°  L: 24°" FontFamily="{DynamicResource Font.Text}"
+                                               FontSize="9.5" Foreground="{DynamicResource Text.Secondary}" Margin="0,4,0,0" />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Right: Reminders / Quick Notes -->
+                            <Border Grid.Column="1" Background="{DynamicResource Fill.Hover}" CornerRadius="12" Padding="10,8">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Header -->
+                                    <Grid Grid.Row="0" Margin="0,0,0,4">
+                                        <TextBlock Text="REMINDERS" FontFamily="{DynamicResource Font.Text}" FontSize="9.5"
+                                                   FontWeight="Bold" Foreground="{DynamicResource Accent.Orange}" />
+                                        <TextBlock x:Name="ReminderCountText" Text="2 items" FontFamily="{DynamicResource Font.Text}"
+                                                   FontSize="9.5" Foreground="{DynamicResource Text.Tertiary}" HorizontalAlignment="Right" />
+                                    </Grid>
+
+                                    <!-- Items List -->
+                                    <StackPanel x:Name="ReminderListPanel" Grid.Row="1" VerticalAlignment="Center">
+                                        <!-- Dynamic items injected in code -->
+                                    </StackPanel>
+
+                                    <!-- Quick Add Box -->
+                                    <Grid Grid.Row="2" Margin="0,4,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox x:Name="ReminderInputBox" Grid.Column="0" Background="#26000000"
+                                                 Foreground="{DynamicResource Text.Primary}" BorderThickness="0"
+                                                 FontSize="10.5" Padding="6,4" VerticalAlignment="Center"
+                                                 KeyDown="ReminderInputBox_KeyDown" Text="New reminder..."
+                                                 GotFocus="ReminderInputBox_GotFocus" LostFocus="ReminderInputBox_LostFocus" />
+                                        <Button x:Name="BtnAddReminder" Grid.Column="1" Style="{DynamicResource IslandButton}"
+                                                Padding="6,4" Margin="4,0,0,0" Click="BtnAddReminder_Click" ToolTip="Add Reminder">
+                                            <TextBlock Text="&#xE710;" FontFamily="{DynamicResource Font.Icons}" FontSize="10"
+                                                       Foreground="{DynamicResource Accent.Orange}" />
+                                        </Button>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Grid>
+
+                    <!-- ============================================================ -->
+                    <!-- LAYER 3: NOTIFICATION VIEW (macOS / iOS Dynamic Island Style) -->
+                    <!-- ============================================================ -->
+                    <Grid x:Name="NotificationLayer" Height="64" HorizontalAlignment="Stretch" Margin="10,0" VerticalAlignment="Center"
+                          Opacity="0" Visibility="Collapsed" RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <ScaleTransform ScaleX="0.96" ScaleY="0.96" />
+                        </Grid.RenderTransform>
+
+                        <Grid VerticalAlignment="Center">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- App Icon / Badge Squircle -->
+                            <Border x:Name="NotificationBadgeBorder" Grid.Column="0" Width="38" Height="38" CornerRadius="10"
+                                    Background="{DynamicResource Accent.Blue}" VerticalAlignment="Center" Margin="2,0,10,0">
+                                <TextBlock x:Name="NotificationIcon" Text="💬"
+                                           FontFamily="{DynamicResource Font.Text}" FontSize="18"
+                                           Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+
+                            <!-- Header (App Name + Time) & Message Content -->
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,8,0">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,1">
+                                    <TextBlock x:Name="NotificationAppName" Text="WHATSAPP"
+                                               FontFamily="{DynamicResource Font.Text}" FontSize="9" FontWeight="Bold"
+                                               Foreground="#9CA3AF" TextTrimming="CharacterEllipsis" MaxWidth="160" />
+                                    <TextBlock Text=" • " FontFamily="{DynamicResource Font.Text}" FontSize="9"
+                                               Foreground="#6B7280" Margin="2,0,2,0" />
+                                    <TextBlock x:Name="NotificationTime" Text="now"
+                                               FontFamily="{DynamicResource Font.Text}" FontSize="9"
+                                               Foreground="#6B7280" />
+                                </StackPanel>
+                                <TextBlock x:Name="NotificationTitle" Text="Notification Title"
+                                           FontFamily="{DynamicResource Font.Text}" FontSize="12.5" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource Text.Primary}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock x:Name="NotificationMessage" Text="Notification message body"
+                                           FontFamily="{DynamicResource Font.Text}" FontSize="11"
+                                           Foreground="{DynamicResource Text.Secondary}" TextTrimming="CharacterEllipsis" Margin="0,1,0,0" />
+                            </StackPanel>
+
+                            <!-- Dismiss Action Button -->
+                            <Button x:Name="BtnDismissNotification" Grid.Column="2" Width="22" Height="22"
+                                    Background="#22FFFFFF" BorderThickness="0" Cursor="Hand"
+                                    VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,2,0"
+                                    Click="BtnDismissNotification_Click">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="11">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="bd" Property="Background" Value="#44FFFFFF"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                                <TextBlock Text="✕" FontSize="10" Foreground="#D1D5DB"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Button>
+                        </Grid>
+                    </Grid>
+
+                </Grid>
+        </controls:IslandPill>
+
+        <!-- ============================================================ -->
+        <!-- PRINTED PHOTO SLIDE-OUT CARD (AUTHENTIC POLAROID / INSTAX)   -->
+        <!-- Slides downwards directly from the Dynamic Island / Notch!   -->
+        <!-- ============================================================ -->
+        <Border x:Name="PrintedPhotoCard"
+                Panel.ZIndex="1"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                Visibility="Collapsed"
+                Width="200"
+                Background="#FAF9F6"
+                CornerRadius="8"
+                BorderBrush="#D1D5DB"
+                BorderThickness="1"
+                Padding="8,8,8,12"
+                Cursor="Hand"
+                MouseLeftButtonUp="PrintedPhotoCard_Click"
+                ToolTip="Klik untuk membuka file foto Polaroid di File Explorer">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="22" ShadowDepth="8" Direction="270" Color="#000000" Opacity="0.65" />
+            </Border.Effect>
+            <Border.RenderTransform>
+                <TranslateTransform x:Name="PrintedPhotoTranslate" X="0" Y="0" />
+            </Border.RenderTransform>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Top: Polaroid Photo Frame (1:1 Square matching captured photo!) -->
+                <Border Grid.Row="0" CornerRadius="4" ClipToBounds="True" Background="#0A0B0E" BorderBrush="#33000000" BorderThickness="1">
+                    <Grid Width="184" Height="184">
+                        <Image x:Name="PrintedPhotoImage" Stretch="UniformToFill">
+                            <Image.Effect>
+                                <BlurEffect x:Name="PrintedPhotoBlur" Radius="0" />
+                            </Image.Effect>
+                        </Image>
+
+                        <!-- Developing milky chemical sheen (fades from opacity 0.55 to 0 as photo clears!) -->
+                        <Border x:Name="PrintedPhotoDevelopingSheen" Background="#E2E8F0" Opacity="0" IsHitTestVisible="False" />
+
+                        <!-- Camera Flash Overlay -->
+                        <Border x:Name="CameraFlashOverlay" Background="#FFFFFF" Opacity="0" IsHitTestVisible="False" />
+                    </Grid>
+                </Border>
+
+                <!-- Bottom Chin: Authentic Instant Polaroid Bottom Margin -->
+                <Grid Grid.Row="1" Margin="2,8,2,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <!-- Watermark: HTPPS / hanstp_projects -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                            <TextBlock Text="HTPPS" FontSize="10.5" FontWeight="ExtraBold" Foreground="#111827" FontFamily="Segoe UI, Arial" />
+                            <TextBlock Text=" / " FontSize="10.5" FontWeight="Bold" Foreground="#FF5722" FontFamily="Segoe UI, Arial" Margin="1,0,1,0" />
+                            <TextBlock Text="hanstp_projects" FontSize="9.5" FontWeight="SemiBold" Foreground="#6B7280" FontFamily="Segoe UI, Arial" VerticalAlignment="Center" />
+                        </StackPanel>
+
+                        <TextBlock x:Name="PrintedPhotoTimestamp" Text="'26 10 25 • RETRO CAM"
+                                   FontSize="8.5" FontWeight="Bold" FontFamily="Consolas, Segoe UI" Foreground="#4B5563" />
+                        <TextBlock x:Name="PrintedPhotoPathText" Text="✓ Auto-saved to Pictures"
+                                   FontSize="8" FontWeight="SemiBold" Foreground="#16A34A" Margin="0,1,0,0" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button x:Name="BtnOpenSavedPhoto" Style="{DynamicResource IslandButton}" Padding="5,3" Margin="0,0,3,0"
+                                Background="#E5E7EB" Click="BtnOpenSavedPhoto_Click" ToolTip="Buka File Foto">
+                            <TextBlock Text="📂" FontSize="10" />
+                        </Button>
+                        <Button x:Name="BtnClosePrintedPhoto" Style="{DynamicResource IslandButton}" Width="20" Height="20"
+                                Background="#E5E7EB" Click="BtnClosePrintedPhoto_Click" ToolTip="Tutup">
+                            <TextBlock Text="✕" FontSize="9" FontWeight="Bold" Foreground="#4B5563" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

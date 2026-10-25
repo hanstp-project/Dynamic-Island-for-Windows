@@ -1,0 +1,34 @@
+## Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleasePublic/
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+publish/
+
+## Visual Studio cache & temporary files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## JetBrains / Rider / VS Code
+.idea/
+*.DotSettings.user
+.vscode/
+
+## Scratch & Local test data
+scratch/
+settings.json
+settings.corrupt-*.json

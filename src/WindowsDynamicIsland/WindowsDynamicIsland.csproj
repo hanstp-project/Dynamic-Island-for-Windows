@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- Windows 10 SDK TFM gives built-in WinRT projections (GSMTC media sessions,
+         notification listener) without any extra NuGet package. -->
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <!-- Windows 10 1809 is the minimum for Global System Media Transport Controls. -->
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <Nullable>enable</Nullable>
+    <!-- Disabled: WPF + WinForms implicit usings cause type-name ambiguities. -->
+    <ImplicitUsings>disable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <!-- Only used for NotifyIcon (system tray); ships with the Windows Desktop runtime. -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>WindowsDynamicIsland</RootNamespace>
+    <AssemblyName>WindowsDynamicIsland</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Resources\Icons\app.ico</ApplicationIcon>
+
+    <Product>Windows Dynamic Island</Product>
+    <AssemblyTitle>Windows Dynamic Island</AssemblyTitle>
+    <Description>A lightweight floating island for Windows: media, system status, clock and notifications.</Description>
+    <Company>Windows Dynamic Island contributors</Company>
+    <Copyright>Copyright (c) 2026 Windows Dynamic Island contributors</Copyright>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <InformationalVersion>1.0.0</InformationalVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+
+    <Deterministic>true</Deterministic>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);WFO0003;WFAC010</NoWarn>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+
+  <!-- Publish profile used by build.ps1: self-contained, single-file, compressed. -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>embedded</DebugType>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-x64</RuntimeIdentifier>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\Icons\app.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="WindowsDynamicIsland.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Management" Version="10.0.13" />
+  </ItemGroup>
+
+</Project>
