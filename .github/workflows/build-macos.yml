@@ -18,46 +18,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build with Swift Package Manager
+      - name: Build and Package Mac App (.app)
         working-directory: ./macos
         run: |
-          swift build -c release 2>&1 | tee build_output.txt || (echo "=== SWIFT BUILD FAILURE ===" && cat build_output.txt && exit 1)
-
-      - name: Create Mac App Bundle (.app)
-        working-directory: ./macos
-        run: |
-          set -e
-          rm -rf MacDynamicIsland.app MacDynamicIsland-macOS.zip
-          
-          # Find compiled binary
-          EXEC_PATH=""
-          if [ -f ".build/arm64-apple-macosx/release/MacDynamicIsland" ]; then
-            EXEC_PATH=".build/arm64-apple-macosx/release/MacDynamicIsland"
-          elif [ -f ".build/release/MacDynamicIsland" ]; then
-            EXEC_PATH=".build/release/MacDynamicIsland"
-          else
-            EXEC_PATH=$(find .build -type f -name "MacDynamicIsland" | head -n 1)
-          fi
-          
-          echo "Found binary at: $EXEC_PATH"
-          if [ -z "$EXEC_PATH" ] || [ ! -f "$EXEC_PATH" ]; then
-            echo "Error: MacDynamicIsland binary not found!"
-            find .build -name "*MacDynamicIsland*"
-            exit 1
-          fi
-          
-          mkdir -p MacDynamicIsland.app/Contents/MacOS
-          mkdir -p MacDynamicIsland.app/Contents/Resources
-          
-          cp "$EXEC_PATH" MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland
-          chmod +x MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland
-          
-          cp Info.plist MacDynamicIsland.app/Contents/Info.plist
-          
-          codesign --force --deep --sign - MacDynamicIsland.app || true
-          
-          zip -r MacDynamicIsland-macOS.zip MacDynamicIsland.app
-          ls -lh MacDynamicIsland-macOS.zip
+          chmod +x package.sh
+          ./package.sh
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
