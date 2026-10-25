@@ -22,35 +22,52 @@ jobs:
         working-directory: ./macos
         run: |
           set -e
-          set -x
-          
-          echo "=== 1. Building Swift Package ==="
-          swift build -c release
-          
-          echo "=== 2. Locating Release Binary ==="
-          BIN_PATH=$(swift build -c release --show-bin-path)
-          echo "Bin path is: $BIN_PATH"
-          ls -la "$BIN_PATH"
-          
-          echo "=== 3. Creating App Bundle Structure ==="
-          rm -rf MacDynamicIsland.app MacDynamicIsland-macOS.zip
-          mkdir -p MacDynamicIsland.app/Contents/MacOS
-          mkdir -p MacDynamicIsland.app/Contents/Resources
-          
-          cp "$BIN_PATH/MacDynamicIsland" MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland
-          chmod +x MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland
-          
-          echo "=== 4. Adding Info.plist ==="
-          cp Info.plist MacDynamicIsland.app/Contents/Info.plist
-          
-          echo "=== 5. Codesigning ==="
-          codesign --force --deep --sign - MacDynamicIsland.app || true
-          
-          echo "=== 6. Packaging with ditto ==="
-          ditto -c -k --sequesterRsrc --keepParent MacDynamicIsland.app MacDynamicIsland-macOS.zip
-          ls -lh MacDynamicIsland-macOS.zip
-          
-          echo "=== SUCCESS ==="
+          {
+            set -x
+            echo "=== 1. Building Swift Package ==="
+            swift build -c release
+            
+            echo "=== 2. Locating Release Binary ==="
+            BIN_PATH=$(swift build -c release --show-bin-path)
+            echo "Bin path is: $BIN_PATH"
+            ls -la "$BIN_PATH"
+            
+            echo "=== 3. Creating App Bundle Structure ==="
+            rm -rf MacDynamicIsland.app MacDynamicIsland-macOS.zip
+            mkdir -p MacDynamicIsland.app/Contents/MacOS
+            mkdir -p MacDynamicIsland.app/Contents/Resources
+            
+            cp "$BIN_PATH/MacDynamicIsland" MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland
+            chmod +x MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland
+            
+            echo "=== 4. Adding Info.plist ==="
+            cp Info.plist MacDynamicIsland.app/Contents/Info.plist
+            
+            echo "=== 5. Codesigning ==="
+            codesign --force --deep --sign - MacDynamicIsland.app || true
+            
+            echo "=== 6. Packaging with ditto ==="
+            ditto -c -k --sequesterRsrc --keepParent MacDynamicIsland.app MacDynamicIsland-macOS.zip
+            ls -lh MacDynamicIsland-macOS.zip
+            
+            echo "=== SUCCESS ==="
+          } > build.log 2>&1 || {
+            STATUS=$?
+            echo "=== BUILD OR PACKAGING FAILED ==="
+            cat build.log
+            tail -n 35 build.log | while IFS= read -r line; do
+              echo "::error::$line"
+            done
+            exit $STATUS
+          }
+
+      - name: Upload Build Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: ./macos/build.log
+          if-no-files-found: ignore
 
       - name: Upload Artifact
         if: always()
