@@ -18,7 +18,7 @@ public struct LyricsKaraokeView: View {
             HStack {
                 Button(action: {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-                        expansionState = .mediaExpanded
+                        expansionState = .pageExpanded(.media)
                     }
                 }) {
                     HStack(spacing: 4) {

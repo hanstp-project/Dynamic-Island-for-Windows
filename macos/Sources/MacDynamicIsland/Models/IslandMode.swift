@@ -8,12 +8,35 @@ public enum IslandDisplayMode: String, Codable, CaseIterable {
     case macBookNotch = "MacBook Notch"
 }
 
+/// The 7 distinct expanded subpages matching Windows edition
+public enum ExpandedSubpage: String, CaseIterable, Identifiable {
+    case media = "Music"
+    case camera = "Retro Cam"
+    case dashboard = "Dashboard"
+    case system = "System Health"
+    case clock = "Time & Date"
+    case tools = "Tools"
+    case weather = "Weather"
+
+    public var id: String { rawValue }
+
+    public var icon: String {
+        switch self {
+        case .media: return "music.note"
+        case .camera: return "camera.aperture"
+        case .dashboard: return "slider.horizontal.3"
+        case .system: return "heart.text.square.fill"
+        case .clock: return "clock.fill"
+        case .tools: return "stopwatch.fill"
+        case .weather: return "cloud.sun.fill"
+        }
+    }
+}
+
 /// Defines current interactive expansion state of the island
 public enum IslandExpansionState: Equatable {
     case compact
-    case mediaExpanded
-    case lyricsExpanded
     case notificationExpanded
-    case controlCenterExpanded
-    case toolsExpanded
+    case pageExpanded(ExpandedSubpage)
+    case lyricsExpanded
 }

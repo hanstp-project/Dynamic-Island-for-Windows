@@ -1,48 +1,7 @@
 import SwiftUI
 import Combine
 
-/// Custom shape for island (pill) or notch (flat top, rounded bottom)
-public struct IslandShape: Shape {
-    public var isNotch: Bool
-
-    public var animatableData: Double {
-        get { isNotch ? 1.0 : 0.0 }
-        set { isNotch = newValue > 0.5 }
-    }
-
-    public func path(in rect: CGRect) -> Path {
-        let radius: CGFloat = 20.0
-        var path = Path()
-        if isNotch {
-            // Flat top against screen bezel, rounded bottom corners
-            path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-            path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
-            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - radius))
-            path.addArc(
-                center: CGPoint(x: rect.maxX - radius, y: rect.maxY - radius),
-                radius: radius,
-                startAngle: .degrees(0),
-                endAngle: .degrees(90),
-                clockwise: false
-            )
-            path.addLine(to: CGPoint(x: rect.minX + radius, y: rect.maxY))
-            path.addArc(
-                center: CGPoint(x: rect.minX + radius, y: rect.maxY - radius),
-                radius: radius,
-                startAngle: .degrees(90),
-                endAngle: .degrees(180),
-                clockwise: false
-            )
-            path.closeSubpath()
-        } else {
-            // Full pill capsule
-            path.addRoundedRect(in: rect, cornerSize: CGSize(width: 22, height: 22), style: .continuous)
-        }
-        return path
-    }
-}
-
-/// Main container for the Dynamic Island / MacBook Notch on macOS
+/// Main container for the Dynamic Island / MacBook Notch on macOS with full 7 subpages
 public struct IslandMainView: View {
     @EnvironmentObject private var windowController: WindowController
     @EnvironmentObject private var mediaService: MediaService
@@ -50,6 +9,7 @@ public struct IslandMainView: View {
     @EnvironmentObject private var lyricsService: LyricsService
 
     @State private var expansionState: IslandExpansionState = .compact
+    @State private var activePage: ExpandedSubpage = .media
     @State private var isHovered: Bool = false
 
     public init() {}
@@ -60,14 +20,10 @@ public struct IslandMainView: View {
             return 220
         case .notificationExpanded:
             return 390
-        case .mediaExpanded:
-            return 430
         case .lyricsExpanded:
-            return 450
-        case .controlCenterExpanded:
-            return 440
-        case .toolsExpanded:
-            return 360
+            return 460
+        case .pageExpanded:
+            return 460
         }
     }
 
@@ -77,14 +33,10 @@ public struct IslandMainView: View {
             return 36
         case .notificationExpanded:
             return 82
-        case .mediaExpanded:
-            return 175
         case .lyricsExpanded:
             return 330
-        case .controlCenterExpanded:
-            return 195
-        case .toolsExpanded:
-            return 120
+        case .pageExpanded:
+            return 245
         }
     }
 
@@ -105,21 +57,86 @@ public struct IslandMainView: View {
                         NotificationBannerView(expansionState: $expansionState)
                             .transition(.opacity)
 
-                    case .mediaExpanded:
-                        ExpandedMediaPlayerView(expansionState: $expansionState)
-                            .transition(.opacity)
-
                     case .lyricsExpanded:
                         LyricsKaraokeView(expansionState: $expansionState)
                             .transition(.opacity)
 
-                    case .controlCenterExpanded:
-                        ControlCenterDashboardView(expansionState: $expansionState)
-                            .transition(.opacity)
+                    case .pageExpanded(let page):
+                        VStack(spacing: 0) {
+                            // Subpage Body
+                            Group {
+                                switch page {
+                                case .media:
+                                    ExpandedMediaPlayerView(expansionState: $expansionState)
+                                case .camera:
+                                    RetroCameraView()
+                                case .dashboard:
+                                    ControlCenterDashboardView(expansionState: $expansionState)
+                                case .system:
+                                    SystemHealthView()
+                                case .clock:
+                                    TimeDateView()
+                                case .tools:
+                                    ToolsView()
+                                case .weather:
+                                    WeatherView()
+                                }
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                    case .toolsExpanded:
-                        CompactIslandView()
-                            .transition(.opacity)
+                            Divider()
+                                .background(Color.white.opacity(0.12))
+
+                            // 7-Icon Master Navigation Bar
+                            HStack(spacing: 4) {
+                                ForEach(ExpandedSubpage.allCases) { subpage in
+                                    Button(action: {
+                                        withAnimation(.spring(response: 0.32, dampingFraction: 0.75)) {
+                                            activePage = subpage
+                                            expansionState = .pageExpanded(subpage)
+                                        }
+                                    }) {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: subpage.icon)
+                                                .font(.system(size: 11, weight: activePage == subpage ? .bold : .medium))
+                                            if activePage == subpage {
+                                                Text(subpage.rawValue)
+                                                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                                            }
+                                        }
+                                        .foregroundColor(activePage == subpage ? .white : .white.opacity(0.45))
+                                        .padding(.horizontal, activePage == subpage ? 10 : 8)
+                                        .padding(.vertical, 5)
+                                        .background(activePage == subpage ? Color.white.opacity(0.18) : Color.clear)
+                                        .clipShape(Capsule())
+                                    }
+                                    .buttonStyle(.plain)
+                                    .help(subpage.rawValue)
+                                }
+
+                                Spacer()
+
+                                // Collapse Button
+                                Button(action: {
+                                    withAnimation(.spring(response: 0.36, dampingFraction: 0.72)) {
+                                        expansionState = .compact
+                                    }
+                                }) {
+                                    Image(systemName: "chevron.up")
+                                        .font(.system(size: 11, weight: .bold))
+                                        .foregroundColor(.white.opacity(0.4))
+                                        .padding(6)
+                                        .background(Color.white.opacity(0.08))
+                                        .clipShape(Circle())
+                                }
+                                .buttonStyle(.plain)
+                                .help("Kecilkan Pulau")
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.black.opacity(0.3))
+                        }
+                        .transition(.opacity)
                     }
                 }
             }
@@ -130,7 +147,6 @@ public struct IslandMainView: View {
                     .stroke(Color.white.opacity(0.14), lineWidth: 0.8)
             )
             .shadow(color: Color.black.opacity(0.45), radius: 18, x: 0, y: 8)
-            // Spring animation for all size, shape, and state transitions
             .animation(.spring(response: 0.38, dampingFraction: 0.72, blendDuration: 0), value: expansionState)
             .animation(.spring(response: 0.38, dampingFraction: 0.72, blendDuration: 0), value: windowController.currentDisplayMode)
             .onHover { hovering in
@@ -176,30 +192,31 @@ public struct IslandMainView: View {
         withAnimation(.spring(response: 0.36, dampingFraction: 0.72)) {
             if expansionState == .compact {
                 if mediaService.isMediaAvailable {
-                    expansionState = .mediaExpanded
+                    activePage = .media
+                    expansionState = .pageExpanded(.media)
                 } else {
-                    expansionState = .controlCenterExpanded
+                    activePage = .dashboard
+                    expansionState = .pageExpanded(.dashboard)
                 }
-            } else {
-                expansionState = .compact
             }
         }
     }
 
     private func handleHover(_ hovering: Bool) {
         if hovering {
-            if expansionState == .compact {
+            if expansionState == .compact && mediaService.isMediaAvailable {
                 withAnimation(.spring(response: 0.36, dampingFraction: 0.72)) {
-                    if mediaService.isMediaAvailable {
-                        expansionState = .mediaExpanded
-                    }
+                    activePage = .media
+                    expansionState = .pageExpanded(.media)
                 }
             }
         } else {
-            // Auto collapse to compact when mouse leaves, unless viewing lyrics
-            if expansionState != .lyricsExpanded && expansionState != .compact {
-                withAnimation(.spring(response: 0.36, dampingFraction: 0.72)) {
-                    expansionState = .compact
+            // Auto collapse to compact when mouse leaves, unless viewing lyrics, camera, or tools
+            if case .pageExpanded(let p) = expansionState {
+                if p != .camera && p != .tools {
+                    withAnimation(.spring(response: 0.36, dampingFraction: 0.72)) {
+                        expansionState = .compact
+                    }
                 }
             }
         }

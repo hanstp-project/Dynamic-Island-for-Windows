@@ -49,6 +49,10 @@ jobs:
               <string>13.0</string>
               <key>LSUIElement</key>
               <true/>
+              <key>NSCameraUsageDescription</key>
+              <string>Dynamic Island memerlukan akses kamera untuk fitur Retro Instant Camera.</string>
+              <key>NSAppleEventsUsageDescription</key>
+              <string>Dynamic Island memerlukan izin untuk membaca status lagu Spotify dan Apple Music.</string>
           </dict>
           </plist>
           EOF
