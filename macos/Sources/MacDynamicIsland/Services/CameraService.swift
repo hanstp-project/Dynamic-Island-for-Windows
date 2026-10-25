@@ -31,12 +31,14 @@ public final class CameraService: NSObject, ObservableObject, AVCaptureVideoData
 
     @Published public var currentFilter: RetroFilter = .warm90s
     @Published public var capturedImage: NSImage?
+    @Published public var lastCapturedPhoto: NSImage?
     @Published public var isFlashTriggered: Bool = false
     @Published public var isRunning: Bool = false
     @Published public var lastSavedPath: String = ""
 
     private var captureSession: AVCaptureSession?
     private var videoOutput: AVCaptureVideoDataOutput?
+    private static let ciContext = CIContext()
 
     public var currentDateStamp: String {
         let formatter = DateFormatter()
@@ -79,14 +81,25 @@ public final class CameraService: NSObject, ObservableObject, AVCaptureVideoData
         let session = AVCaptureSession()
         session.sessionPreset = .medium
 
-        guard let camera = AVCaptureDevice.default(for: .video),
+        // Discover camera on macOS (built-in or external)
+        let discovery = AVCaptureDevice.DiscoverySession(
+            deviceTypes: [.builtInWideAngleCamera, .externalUnknown],
+            mediaType: .video,
+            position: .unspecified
+        )
+
+        guard let camera = discovery.devices.first ?? AVCaptureDevice.default(for: .video),
               let input = try? AVCaptureDeviceInput(device: camera),
-              session.canAddInput(input) else { return }
+              session.canAddInput(input) else {
+            return
+        }
 
         session.addInput(input)
 
         let output = AVCaptureVideoDataOutput()
-        output.setSampleBufferDelegate(self, queue: DispatchQueue(label: "camera.stream"))
+        output.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_32BGRA)]
+        output.setSampleBufferDelegate(self, queue: DispatchQueue(label: "camera.stream", qos: .userInteractive))
+
         if session.canAddOutput(output) {
             session.addOutput(output)
             self.videoOutput = output
@@ -105,8 +118,7 @@ public final class CameraService: NSObject, ObservableObject, AVCaptureVideoData
     ) {
         guard let cvImage = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         let ciImage = CIImage(cvImageBuffer: cvImage)
-        let context = CIContext()
-        if let cgImage = context.createCGImage(ciImage, from: ciImage.extent) {
+        if let cgImage = Self.ciContext.createCGImage(ciImage, from: ciImage.extent) {
             let nsImage = NSImage(cgImage: cgImage, size: NSSize(width: ciImage.extent.width, height: ciImage.extent.height))
             Task { @MainActor in
                 self.capturedImage = nsImage
@@ -149,6 +161,10 @@ public final class CameraService: NSObject, ObservableObject, AVCaptureVideoData
 
         if let current = capturedImage {
             current.draw(in: photoRect)
+        } else {
+            // Draw gradient if live camera stream is still initializing
+            let gradient = NSGradient(starting: NSColor.systemPurple, ending: NSColor.systemOrange)
+            gradient?.draw(in: photoRect, angle: 45)
         }
 
         // Orange timestamp watermark
@@ -161,6 +177,8 @@ public final class CameraService: NSObject, ObservableObject, AVCaptureVideoData
         attrString.draw(at: NSPoint(x: 32, y: 35))
 
         image.unlockFocus()
+
+        self.lastCapturedPhoto = image
 
         if let tiff = image.tiffRepresentation,
            let rep = NSBitmapImageRep(data: tiff),

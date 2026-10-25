@@ -21,7 +21,7 @@ public final class FloatingPanel: NSPanel {
     }
 
     public override var canBecomeKey: Bool {
-        return false
+        return true
     }
 
     public override var canBecomeMain: Bool {

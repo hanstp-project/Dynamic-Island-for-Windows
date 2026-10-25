@@ -1,16 +1,18 @@
 import SwiftUI
 import AppKit
 
-/// Retro Instant Camera View with Polaroid Frame, live webcam viewfinder, and filter picker
+/// Retro Instant Camera View with live webcam viewfinder, Polaroid filter picker, and physical print ejection animation
 public struct RetroCameraView: View {
     @ObservedObject private var cameraService = CameraService.shared
     @State private var isShowingSavedToast: Bool = false
+    @State private var isEjectingPhoto: Bool = false
+    @State private var printedPhoto: NSImage? = nil
 
     public init() {}
 
     public var body: some View {
         HStack(spacing: 16) {
-            // Left: Vintage Viewfinder Screen
+            // Left: Vintage Viewfinder Screen or Ejected Photo
             ZStack {
                 // Outer Polaroid border
                 RoundedRectangle(cornerRadius: 14)
@@ -69,6 +71,30 @@ public struct RetroCameraView: View {
                         Color.white
                             .transition(.opacity)
                     }
+
+                    // Ejected Polaroid Animation Overlay
+                    if isEjectingPhoto, let photo = printedPhoto {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color(white: 0.95))
+                                .frame(width: 160, height: 135)
+                                .shadow(color: .black.opacity(0.5), radius: 10, y: 5)
+
+                            VStack(spacing: 4) {
+                                Image(nsImage: photo)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 140, height: 100)
+                                    .clipped()
+                                    .cornerRadius(4)
+
+                                Text(cameraService.currentDateStamp)
+                                    .font(.system(size: 8, weight: .bold, design: .monospaced))
+                                    .foregroundColor(.orange)
+                            }
+                        }
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                    }
                 }
                 .frame(width: 180, height: 140)
             }
@@ -108,13 +134,9 @@ public struct RetroCameraView: View {
                 Spacer()
 
                 // Bottom: Big Red Shutter Button & Status
-                HStack(spacing: 12) {
+                HStack(spacing: 10) {
                     Button(action: {
-                        cameraService.capturePhoto()
-                        isShowingSavedToast = true
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-                            isShowingSavedToast = false
-                        }
+                        takePictureWithAnimation()
                     }) {
                         HStack(spacing: 8) {
                             ZStack {
@@ -151,6 +173,24 @@ public struct RetroCameraView: View {
         }
         .onDisappear {
             cameraService.stop()
+        }
+    }
+
+    private func takePictureWithAnimation() {
+        cameraService.capturePhoto()
+        printedPhoto = cameraService.lastCapturedPhoto ?? cameraService.capturedImage
+
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.65)) {
+            isEjectingPhoto = true
+        }
+
+        isShowingSavedToast = true
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            withAnimation(.easeInOut(duration: 0.4)) {
+                isEjectingPhoto = false
+            }
+            isShowingSavedToast = false
         }
     }
 

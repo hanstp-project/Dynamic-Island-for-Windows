@@ -34,4 +34,31 @@ public struct AppNotification: Identifiable, Equatable {
             accentColorHex: "#25D366"
         )
     }
+
+    public static func sampleTelegram() -> AppNotification {
+        AppNotification(
+            appName: "Telegram",
+            sender: "Hanif Project",
+            message: "Project Mac Dynamic Island update v1.0.0 siap di-test!",
+            accentColorHex: "#229ED9"
+        )
+    }
+
+    public static func sampleSpotify() -> AppNotification {
+        AppNotification(
+            appName: "Spotify",
+            sender: "Now Playing",
+            message: "Bohemian Rhapsody • Queen",
+            accentColorHex: "#1DB954"
+        )
+    }
+
+    public static func sampleBattery() -> AppNotification {
+        AppNotification(
+            appName: "System",
+            sender: "Baterai Rendah",
+            message: "Sisa baterai 15%. Harap sambungkan MacBook ke charger.",
+            accentColorHex: "#FF3B30"
+        )
+    }
 }

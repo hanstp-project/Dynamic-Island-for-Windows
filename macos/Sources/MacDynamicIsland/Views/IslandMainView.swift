@@ -1,12 +1,13 @@
 import SwiftUI
 import Combine
 
-/// Main container for the Dynamic Island / MacBook Notch on macOS with full 7 subpages
+/// Main container for the Dynamic Island / MacBook Notch on macOS with full 8 subpages, hover expansion, and authentic notch curvature
 public struct IslandMainView: View {
     @EnvironmentObject private var windowController: WindowController
     @EnvironmentObject private var mediaService: MediaService
     @EnvironmentObject private var notifService: NotificationService
     @EnvironmentObject private var lyricsService: LyricsService
+    @ObservedObject private var toolsService = ToolsService.shared
 
     @State private var expansionState: IslandExpansionState = .compact
     @State private var activePage: ExpandedSubpage = .media
@@ -17,13 +18,13 @@ public struct IslandMainView: View {
     private var currentWidth: CGFloat {
         switch expansionState {
         case .compact:
-            return 220
+            return (toolsService.isTimerRunning || toolsService.isStopwatchRunning) ? 250 : 220
         case .notificationExpanded:
-            return 390
+            return 400
         case .lyricsExpanded:
-            return 460
+            return 490
         case .pageExpanded:
-            return 460
+            return 490
         }
     }
 
@@ -34,9 +35,9 @@ public struct IslandMainView: View {
         case .notificationExpanded:
             return 82
         case .lyricsExpanded:
-            return 330
+            return 340
         case .pageExpanded:
-            return 245
+            return 260
         }
     }
 
@@ -80,6 +81,8 @@ public struct IslandMainView: View {
                                     ToolsView()
                                 case .weather:
                                     WeatherView()
+                                case .settings:
+                                    SettingsView()
                                 }
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -87,7 +90,7 @@ public struct IslandMainView: View {
                             Divider()
                                 .background(Color.white.opacity(0.12))
 
-                            // 7-Icon Master Navigation Bar
+                            // 8-Icon Master Navigation Bar
                             HStack(spacing: 4) {
                                 ForEach(ExpandedSubpage.allCases) { subpage in
                                     Button(action: {
@@ -105,7 +108,7 @@ public struct IslandMainView: View {
                                             }
                                         }
                                         .foregroundColor(activePage == subpage ? .white : .white.opacity(0.45))
-                                        .padding(.horizontal, activePage == subpage ? 10 : 8)
+                                        .padding(.horizontal, activePage == subpage ? 9 : 7)
                                         .padding(.vertical, 5)
                                         .background(activePage == subpage ? Color.white.opacity(0.18) : Color.clear)
                                         .clipShape(Capsule())
@@ -132,15 +135,16 @@ public struct IslandMainView: View {
                                 .buttonStyle(.plain)
                                 .help("Kecilkan Pulau")
                             }
-                            .padding(.horizontal, 12)
+                            .padding(.horizontal, 10)
                             .padding(.vertical, 6)
-                            .background(Color.black.opacity(0.3))
+                            .background(Color.black.opacity(0.35))
                         }
                         .transition(.opacity)
                     }
                 }
             }
             .frame(width: currentWidth, height: currentHeight)
+            .contentShape(Rectangle())
             .clipShape(IslandShape(isNotch: windowController.currentDisplayMode == .macBookNotch))
             .overlay(
                 IslandShape(isNotch: windowController.currentDisplayMode == .macBookNotch)
@@ -178,6 +182,9 @@ public struct IslandMainView: View {
             // Jet-black OLED base
             Color.black.opacity(0.92)
 
+            // Ultra-subtle glassmorphic blur reflection
+            Color.white.opacity(0.04)
+
             // Subtle top highlight
             LinearGradient(
                 colors: [Color.white.opacity(0.08), Color.clear],
@@ -191,29 +198,24 @@ public struct IslandMainView: View {
     private func handleTap() {
         withAnimation(.spring(response: 0.36, dampingFraction: 0.72)) {
             if expansionState == .compact {
-                if mediaService.isMediaAvailable {
-                    activePage = .media
-                    expansionState = .pageExpanded(.media)
-                } else {
-                    activePage = .dashboard
-                    expansionState = .pageExpanded(.dashboard)
-                }
+                let target = mediaService.isMediaAvailable ? .media : activePage
+                expansionState = .pageExpanded(target)
             }
         }
     }
 
     private func handleHover(_ hovering: Bool) {
         if hovering {
-            if expansionState == .compact && mediaService.isMediaAvailable {
+            if expansionState == .compact {
                 withAnimation(.spring(response: 0.36, dampingFraction: 0.72)) {
-                    activePage = .media
-                    expansionState = .pageExpanded(.media)
+                    let target = mediaService.isMediaAvailable ? .media : activePage
+                    expansionState = .pageExpanded(target)
                 }
             }
         } else {
-            // Auto collapse to compact when mouse leaves, unless viewing lyrics, camera, or tools
+            // Auto collapse to compact when mouse leaves, unless viewing lyrics, camera, tools, or settings
             if case .pageExpanded(let p) = expansionState {
-                if p != .camera && p != .tools {
+                if p != .camera && p != .tools && p != .settings {
                     withAnimation(.spring(response: 0.36, dampingFraction: 0.72)) {
                         expansionState = .compact
                     }
@@ -223,20 +225,53 @@ public struct IslandMainView: View {
     }
 }
 
-/// Dynamic Island shape: either floating capsule or notch with top edge flat and bottom corners rounded
+/// Dynamic Island shape: either floating capsule or authentic MacBook notch with top concave curve-out ears
 public struct IslandShape: Shape {
     public var isNotch: Bool
 
     public func path(in rect: CGRect) -> Path {
         if isNotch {
             var path = Path()
-            let cornerRadius: CGFloat = min(22, rect.height / 2)
+            let earRadius: CGFloat = 10
+            let bottomRadius: CGFloat = min(16, rect.height / 2)
+
+            // 1. Start at top-left ear (flush against top screen bezel)
             path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-            path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
-            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - cornerRadius))
-            path.addQuadCurve(to: CGPoint(x: rect.maxX - cornerRadius, y: rect.maxY), control: CGPoint(x: rect.maxX, y: rect.maxY))
-            path.addLine(to: CGPoint(x: rect.minX + cornerRadius, y: rect.maxY))
-            path.addQuadCurve(to: CGPoint(x: rect.minX, y: rect.maxY - cornerRadius), control: CGPoint(x: rect.minX, y: rect.maxY))
+
+            // 2. Left concave ear: curve inward from top bezel down to notch side
+            path.addQuadCurve(
+                to: CGPoint(x: rect.minX + earRadius, y: rect.minY + earRadius),
+                control: CGPoint(x: rect.minX + earRadius, y: rect.minY)
+            )
+
+            // 3. Left vertical edge going down
+            path.addLine(to: CGPoint(x: rect.minX + earRadius, y: rect.maxY - bottomRadius))
+
+            // 4. Bottom-left convex rounded corner
+            path.addQuadCurve(
+                to: CGPoint(x: rect.minX + earRadius + bottomRadius, y: rect.maxY),
+                control: CGPoint(x: rect.minX + earRadius, y: rect.maxY)
+            )
+
+            // 5. Bottom horizontal edge
+            path.addLine(to: CGPoint(x: rect.maxX - earRadius - bottomRadius, y: rect.maxY))
+
+            // 6. Bottom-right convex rounded corner
+            path.addQuadCurve(
+                to: CGPoint(x: rect.maxX - earRadius, y: rect.maxY - bottomRadius),
+                control: CGPoint(x: rect.maxX - earRadius, y: rect.maxY)
+            )
+
+            // 7. Right vertical edge going up
+            path.addLine(to: CGPoint(x: rect.maxX - earRadius, y: rect.minY + earRadius))
+
+            // 8. Right concave ear: curve outward up into top bezel
+            path.addQuadCurve(
+                to: CGPoint(x: rect.maxX, y: rect.minY),
+                control: CGPoint(x: rect.maxX - earRadius, y: rect.minY)
+            )
+
+            // 9. Close top edge
             path.closeSubpath()
             return path
         } else {
@@ -244,4 +279,3 @@ public struct IslandShape: Shape {
         }
     }
 }
-

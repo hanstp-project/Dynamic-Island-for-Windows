@@ -17,6 +17,7 @@ public enum ExpandedSubpage: String, CaseIterable, Identifiable {
     case clock = "Time & Date"
     case tools = "Tools"
     case weather = "Weather"
+    case settings = "Settings"
 
     public var id: String { rawValue }
 
@@ -29,6 +30,7 @@ public enum ExpandedSubpage: String, CaseIterable, Identifiable {
         case .clock: return "clock.fill"
         case .tools: return "stopwatch.fill"
         case .weather: return "cloud.sun.fill"
+        case .settings: return "gearshape.fill"
         }
     }
 }
