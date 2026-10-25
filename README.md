@@ -174,5 +174,4 @@ Kontribusi selalu diterima dengan senang hati!
 ## 📜 Lisensi
 Hak Cipta © 2026 **hanstp project** (`hanstp_projects`).
 
-Proyek ini didistribusikan di bawah lisensi **MIT License**. Bebas digunakan, dipelajari, dan dimodifikasi secara terbuka.
 
