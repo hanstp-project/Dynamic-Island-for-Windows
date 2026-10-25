@@ -23,8 +23,17 @@ jobs:
         run: |
           set -e
           
-          echo "=== 1. Building Swift Package Product ==="
-          swift build -c release
+          echo "=== 1. Building Swift Package ==="
+          swift build -c release 2>&1 | tee /tmp/build_log.txt || {
+            echo "::error title=SwiftBuildFailed::Swift build encountered errors!"
+            grep -E "error:" /tmp/build_log.txt | head -n 10 | while IFS= read -r err; do
+              echo "::error::$err"
+            done
+            tail -n 25 /tmp/build_log.txt | while IFS= read -r line; do
+              echo "::error::$line"
+            done
+            exit 1
+          }
           
           echo "=== 2. Creating .app Bundle Structure ==="
           rm -rf MacDynamicIsland.app MacDynamicIsland-macOS.zip
@@ -37,6 +46,7 @@ jobs:
           elif [ -f ".build/release/MacDynamicIsland" ]; then
             cp -v .build/release/MacDynamicIsland MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland
           else
+            echo "::notice::Searching .build for binary..."
             find .build -type f -name "MacDynamicIsland" -exec cp -v {} MacDynamicIsland.app/Contents/MacOS/MacDynamicIsland \;
           fi
           
