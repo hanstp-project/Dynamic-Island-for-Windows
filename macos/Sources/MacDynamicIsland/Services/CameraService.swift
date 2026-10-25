@@ -38,7 +38,6 @@ public final class CameraService: NSObject, ObservableObject, AVCaptureVideoData
 
     private var captureSession: AVCaptureSession?
     private var videoOutput: AVCaptureVideoDataOutput?
-    private static let ciContext = CIContext()
 
     public var currentDateStamp: String {
         let formatter = DateFormatter()
@@ -118,7 +117,8 @@ public final class CameraService: NSObject, ObservableObject, AVCaptureVideoData
     ) {
         guard let cvImage = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         let ciImage = CIImage(cvImageBuffer: cvImage)
-        if let cgImage = Self.ciContext.createCGImage(ciImage, from: ciImage.extent) {
+        let context = CIContext()
+        if let cgImage = context.createCGImage(ciImage, from: ciImage.extent) {
             let nsImage = NSImage(cgImage: cgImage, size: NSSize(width: ciImage.extent.width, height: ciImage.extent.height))
             Task { @MainActor in
                 self.capturedImage = nsImage
