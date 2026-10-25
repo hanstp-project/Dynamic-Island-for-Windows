@@ -21,8 +21,9 @@ jobs:
       - name: Build and Package Mac App (.app)
         working-directory: ./macos
         run: |
-          chmod +x package.sh
-          ./package.sh
+          tr -d '\r' < package.sh > package_clean.sh
+          chmod +x package_clean.sh
+          ./package_clean.sh
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
