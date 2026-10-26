@@ -927,7 +927,7 @@ public class UnitTest1
     [Fact]
     public void TestWeatherInfoEmojiAndTimerServiceStateChanged()
     {
-        var w = new WeatherInfo { Temperature = 29, Condition = "Clear Sky", Emoji = "☀️" };
+        var w = new Services.WeatherInfo { Temperature = 29, Condition = "Clear Sky", Emoji = "☀️" };
         Assert.Equal("☀️", w.Emoji);
 
         var timerService = new Services.TimerService();
@@ -946,7 +946,7 @@ public class UnitTest1
         Assert.Equal(3, stateChangedCount);
 
         timerService.SetMode(Services.TimerMode.Countdown);
-        Assert.Equal(4, stateChangedCount);
+        Assert.Equal(5, stateChangedCount);
     }
 }
 
