@@ -20,6 +20,7 @@ public sealed class TimerService
 
     public event Action? Tick;
     public event Action? CountdownCompleted;
+    public event Action? StateChanged;
 
     public TimerService()
     {
@@ -32,6 +33,7 @@ public sealed class TimerService
         if (Mode == mode) return;
         Reset();
         Mode = mode;
+        StateChanged?.Invoke();
         Tick?.Invoke();
     }
 
@@ -41,6 +43,7 @@ public sealed class TimerService
         {
             _stopwatch.Start();
             _timer.Start();
+            StateChanged?.Invoke();
             Tick?.Invoke();
         }
     }
@@ -51,6 +54,7 @@ public sealed class TimerService
         {
             _stopwatch.Stop();
             _timer.Stop();
+            StateChanged?.Invoke();
             Tick?.Invoke();
         }
     }
@@ -66,6 +70,7 @@ public sealed class TimerService
         _stopwatch.Reset();
         _timer.Stop();
         _countdownRemaining = _countdownInitial;
+        StateChanged?.Invoke();
         Tick?.Invoke();
     }
 

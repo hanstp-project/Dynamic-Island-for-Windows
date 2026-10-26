@@ -115,6 +115,7 @@ public partial class MainWindow : Window
 
         _timerService.Tick += OnTimerTick;
         _timerService.CountdownCompleted += OnTimerCountdownCompleted;
+        _timerService.StateChanged += OnTimerStateChanged;
         _weatherService.Updated += OnWeatherUpdated;
         _reminderService.Changed += OnRemindersChanged;
         _lyricsService.LyricsUpdated += OnLyricsUpdated;
@@ -138,6 +139,7 @@ public partial class MainWindow : Window
         // Initial tools, weather, reminders
         UpdateTimerDisplay();
         UpdateWeatherDisplay(_weatherService.Current);
+        UpdateCompactVisibility();
         RenderReminders();
         RefreshDashboardHardwareControls();
 
@@ -165,7 +167,7 @@ public partial class MainWindow : Window
 
             var s = _settingsService.Current;
             _currentGeometry = IslandLayout.For(_stateMachine.State, _stateMachine.Page,
-                _mediaService.Current.IsPlaying, false, s);
+                _mediaService.Current.IsPlaying, false, s, _timerService.IsRunning);
             IslandAnimations.SetGeometry(Pill, _currentGeometry);
         }
         catch (Exception ex)
@@ -267,7 +269,7 @@ public partial class MainWindow : Window
         {
             var s = _settingsService.Current;
             var targetGeom = IslandLayout.For(newState, _stateMachine.Page,
-                _mediaService.Current.IsPlaying, _stateMachine.NotificationDetailsVisible, s);
+                _mediaService.Current.IsPlaying, _stateMachine.NotificationDetailsVisible, s, _timerService.IsRunning);
 
             bool growing = IslandLayout.IsGrowing(_currentGeometry, targetGeom);
             _currentGeometry = targetGeom;
@@ -303,10 +305,7 @@ public partial class MainWindow : Window
                 IslandAnimations.ShowLayer(CompactLayer, profile);
                 _cameraService.Stop();
 
-                bool showMusic = _mediaService.Current.IsPlaying && s.MediaEnabled;
-                CompactMusicContent.Visibility = showMusic ? Visibility.Visible : Visibility.Collapsed;
-                CompactIdleContent.Visibility = showMusic ? Visibility.Collapsed : Visibility.Visible;
-                CompactVisualizer.SetActive(showMusic, s.ReducedMotion);
+                UpdateCompactVisibility();
             }
         });
     }
@@ -1308,7 +1307,15 @@ public partial class MainWindow : Window
         {
             _hoverTimer.Stop();
             _autoCollapseTimer.Stop();
-            _stateMachine.ToggleExpanded();
+            if (_timerService.IsRunning && !_mediaService.Current.IsPlaying)
+            {
+                _stateMachine.SetExpanded(true);
+                _stateMachine.SelectPage(ExpandedPage.Tools);
+            }
+            else
+            {
+                _stateMachine.ToggleExpanded();
+            }
         }
     }
 
@@ -1351,6 +1358,15 @@ public partial class MainWindow : Window
         pageMenu.Items.Add(weatherItem);
 
         menu.Items.Add(pageMenu);
+
+        var weatherGlanceItem = new MenuItem { Header = "🌤️ Preview Weather Island Peek" };
+        weatherGlanceItem.Click += async (_, _) =>
+        {
+            _stateMachine.SetExpanded(false);
+            await _weatherService.RefreshAsync();
+            ShowWeatherGlance(_weatherService.Current);
+        };
+        menu.Items.Add(weatherGlanceItem);
 
         var styleToggleItem = new MenuItem
         {
@@ -1868,22 +1884,88 @@ public partial class MainWindow : Window
         _timerService.SetMode(newMode);
         ToolsTimerModeText.Text = newMode == TimerMode.Stopwatch ? "STOPWATCH" : "5M TIMER";
         ToolsTimerModeText.Foreground = (TryFindResource(newMode == TimerMode.Stopwatch ? "Accent.Blue" : "Accent.Orange") as Brush) ?? Brushes.DodgerBlue;
+        UpdateCompactVisibility();
+        RefreshCompactPillGeometry();
     }
 
     private void BtnToolsTimerPlay_Click(object sender, RoutedEventArgs e)
-        => _timerService.Toggle();
+    {
+        _timerService.Toggle();
+        UpdateCompactVisibility();
+        RefreshCompactPillGeometry();
+    }
 
     private void BtnToolsTimerReset_Click(object sender, RoutedEventArgs e)
-        => _timerService.Reset();
+    {
+        _timerService.Reset();
+        UpdateCompactVisibility();
+        RefreshCompactPillGeometry();
+    }
 
     private void OnTimerTick() => Dispatcher.Invoke(UpdateTimerDisplay);
 
     private void UpdateTimerDisplay()
     {
         var t = _timerService.Mode == TimerMode.Stopwatch ? _timerService.Elapsed : _timerService.CountdownRemaining;
-        ToolsTimerDisplay.Text = $"{t.Minutes:D2}:{t.Seconds:D2}.{t.Milliseconds / 100}";
+        string timeStr = $"{t.Minutes:D2}:{t.Seconds:D2}.{t.Milliseconds / 100}";
+        ToolsTimerDisplay.Text = timeStr;
         ToolsTimerPlayIcon.Text = _timerService.IsRunning ? "\uE769" : "\uE768";
+
+        CompactTimerTime.Text = timeStr;
+        CompactMusicTimerText.Text = timeStr;
+        CompactTimerBadge.Text = _timerService.Mode == TimerMode.Stopwatch ? "STOPWATCH" : "TIMER";
+        CompactTimerBadge.Foreground = (TryFindResource(_timerService.Mode == TimerMode.Stopwatch ? "Accent.Blue" : "Accent.Orange") as Brush) ?? Brushes.DodgerBlue;
+        CompactTimerIcon.Text = _timerService.IsRunning ? "⏱" : "⏸";
     }
+
+    private void UpdateCompactVisibility()
+    {
+        var s = _settingsService.Current;
+        bool showMusic = _mediaService.Current.IsPlaying && s.MediaEnabled;
+        bool timerRunning = _timerService.IsRunning;
+
+        if (showMusic)
+        {
+            CompactMusicContent.Visibility = Visibility.Visible;
+            CompactIdleContent.Visibility = Visibility.Collapsed;
+            CompactTimerContent.Visibility = Visibility.Collapsed;
+            CompactMusicTimerBadge.Visibility = timerRunning ? Visibility.Visible : Visibility.Collapsed;
+            CompactVisualizer.SetActive(true, s.ReducedMotion);
+        }
+        else if (timerRunning)
+        {
+            CompactMusicContent.Visibility = Visibility.Collapsed;
+            CompactIdleContent.Visibility = Visibility.Collapsed;
+            CompactTimerContent.Visibility = Visibility.Visible;
+            CompactVisualizer.SetActive(false, s.ReducedMotion);
+        }
+        else
+        {
+            CompactMusicContent.Visibility = Visibility.Collapsed;
+            CompactIdleContent.Visibility = Visibility.Visible;
+            CompactTimerContent.Visibility = Visibility.Collapsed;
+            CompactVisualizer.SetActive(false, s.ReducedMotion);
+        }
+    }
+
+    private void RefreshCompactPillGeometry()
+    {
+        if (!_stateMachine.IsExpandedByUser && _stateMachine.State is IslandState.Idle or IslandState.MusicPlaying or IslandState.Hovered)
+        {
+            var s = _settingsService.Current;
+            var targetGeom = IslandLayout.For(_stateMachine.State, _stateMachine.Page,
+                _mediaService.Current.IsPlaying, _stateMachine.NotificationDetailsVisible, s, _timerService.IsRunning);
+            bool growing = IslandLayout.IsGrowing(_currentGeometry, targetGeom);
+            _currentGeometry = targetGeom;
+            IslandAnimations.AnimateGeometry(Pill, targetGeom, growing, AnimationProfile.From(s));
+        }
+    }
+
+    private void OnTimerStateChanged() => Dispatcher.Invoke(() =>
+    {
+        UpdateCompactVisibility();
+        RefreshCompactPillGeometry();
+    });
 
     private void OnTimerCountdownCompleted()
     {
@@ -1921,7 +2003,40 @@ public partial class MainWindow : Window
     // WEATHER & REMINDERS
     // =========================================================================
 
-    private void OnWeatherUpdated(WeatherInfo w) => Dispatcher.Invoke(() => UpdateWeatherDisplay(w));
+    private void OnWeatherUpdated(WeatherInfo w) => Dispatcher.Invoke(() =>
+    {
+        UpdateWeatherDisplay(w);
+        ShowWeatherGlance(w);
+    });
+
+    public void ShowWeatherGlance(WeatherInfo w)
+    {
+        if (_stateMachine.IsExpandedByUser) return;
+        if (!_settingsService.Current.NotificationsEnabled) return;
+
+        ShowNotification(new NotificationInfo
+        {
+            Kind = NotificationKind.System,
+            AppName = "WEATHER UPDATE",
+            Title = $"{w.Location} • {w.Temperature}°C {w.Condition}",
+            Message = $"{w.HighLow}  •  Humidity {w.Humidity}  •  Wind {w.WindSpeed}",
+            IconGlyph = !string.IsNullOrWhiteSpace(w.Emoji) ? w.Emoji : "🌤️",
+            AccentColor = "#F59E0B",
+            Timeout = TimeSpan.FromSeconds(3.5)
+        });
+    }
+
+    private async void WeatherCard_Click(object sender, MouseButtonEventArgs e)
+    {
+        await _weatherService.RefreshAsync();
+    }
+
+    private async void BtnRefreshWeather_Click(object sender, RoutedEventArgs e)
+    {
+        await _weatherService.RefreshAsync();
+        _stateMachine.SetExpanded(false);
+        ShowWeatherGlance(_weatherService.Current);
+    }
 
     private void UpdateWeatherDisplay(WeatherInfo w)
     {

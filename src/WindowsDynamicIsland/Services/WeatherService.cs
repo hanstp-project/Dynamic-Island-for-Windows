@@ -11,6 +11,7 @@ public sealed record WeatherInfo
     public int Temperature { get; init; } = 28;
     public string Condition { get; init; } = "Partly Cloudy";
     public string IconGlyph { get; init; } = "\uE707"; // Cloud + Sun
+    public string Emoji { get; init; } = "⛅";
     public string Location { get; init; } = "Current Location";
     public string Humidity { get; init; } = "65%";
     public string WindSpeed { get; init; } = "12 km/h";
@@ -67,12 +68,13 @@ public sealed class WeatherService
                     }
                 }
 
-                var (condition, icon) = MapWeatherCode(code);
+                var (condition, icon, emoji) = MapWeatherCode(code);
                 _current = new WeatherInfo
                 {
                     Temperature = (int)Math.Round(temp),
                     Condition = condition,
                     IconGlyph = icon,
+                    Emoji = emoji,
                     Location = "Local Weather",
                     Humidity = $"{humidity}%",
                     WindSpeed = $"{Math.Round(wind)} km/h",
@@ -89,17 +91,17 @@ public sealed class WeatherService
         }
     }
 
-    private static (string Condition, string Icon) MapWeatherCode(int code) => code switch
+    private static (string Condition, string Icon, string Emoji) MapWeatherCode(int code) => code switch
     {
-        0 => ("Clear Sky", "\uE706"),            // Sun
-        1 or 2 => ("Partly Cloudy", "\uE707"),  // Sun with cloud
-        3 => ("Overcast", "\uE753"),            // Cloud
-        45 or 48 => ("Foggy", "\uE753"),        // Fog
-        51 or 53 or 55 => ("Drizzle", "\uE708"),// Drizzle
-        61 or 63 or 65 => ("Rain", "\uE708"),   // Rain
-        71 or 73 or 75 => ("Snow", "\uE709"),   // Snow
-        80 or 81 or 82 => ("Showers", "\uE708"),// Showers
-        95 or 96 or 99 => ("Thunderstorm", "\uE754"), // Thunder
-        _ => ("Partly Cloudy", "\uE707")
+        0 => ("Clear Sky", "\uE706", "☀️"),            // Sun
+        1 or 2 => ("Partly Cloudy", "\uE707", "⛅"),  // Sun with cloud
+        3 => ("Overcast", "\uE753", "☁️"),            // Cloud
+        45 or 48 => ("Foggy", "\uE753", "🌫️"),        // Fog
+        51 or 53 or 55 => ("Drizzle", "\uE708", "🌦️"),// Drizzle
+        61 or 63 or 65 => ("Rain", "\uE708", "🌧️"),   // Rain
+        71 or 73 or 75 => ("Snow", "\uE709", "❄️"),   // Snow
+        80 or 81 or 82 => ("Showers", "\uE708", "🌧️"),// Showers
+        95 or 96 or 99 => ("Thunderstorm", "\uE754", "⛈️"), // Thunder
+        _ => ("Partly Cloudy", "\uE707", "⛅")
     };
 }

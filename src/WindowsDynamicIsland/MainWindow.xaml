@@ -115,10 +115,52 @@
                                 </StackPanel>
                             </Grid>
 
-                            <!-- Audio Visualizer Waveform -->
-                            <controls:AudioVisualizer x:Name="CompactVisualizer" Grid.Column="2"
-                                                      BarBrush="{DynamicResource Accent.Green}"
-                                                      VerticalAlignment="Center" Margin="0,0,10,0" Height="16" />
+                            <!-- Audio Visualizer Waveform & Compact Stopwatch Badge -->
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
+                                <Border x:Name="CompactMusicTimerBadge" Background="#260A84FF" CornerRadius="4" Padding="5,1" Margin="0,0,6,0"
+                                        Visibility="Collapsed" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="⏱ " FontSize="9" VerticalAlignment="Center" />
+                                        <TextBlock x:Name="CompactMusicTimerText" Text="00:00.0"
+                                                   FontFamily="{DynamicResource Font.Display}" FontSize="10.5" FontWeight="Bold"
+                                                   Foreground="{DynamicResource Accent.Blue}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Border>
+                                <controls:AudioVisualizer x:Name="CompactVisualizer"
+                                                          BarBrush="{DynamicResource Accent.Green}"
+                                                          VerticalAlignment="Center" Height="16" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Stopwatch / Timer Running Compact Content -->
+                        <Grid x:Name="CompactTimerContent" Visibility="Collapsed">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Left: Glowing Animated Stopwatch Icon + Label -->
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
+                                <Border Width="20" Height="20" CornerRadius="10" Background="#260A84FF" VerticalAlignment="Center" Margin="0,0,6,0">
+                                    <TextBlock x:Name="CompactTimerIcon" Text="⏱" FontSize="11"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock x:Name="CompactTimerBadge" Text="STOPWATCH"
+                                           FontFamily="{DynamicResource Font.Text}" FontSize="9.5" FontWeight="Bold"
+                                           Foreground="{DynamicResource Accent.Blue}" VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <!-- Center: Sensor Dot -->
+                            <Border Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                    Width="5" Height="5" CornerRadius="2.5" Background="#2C2C2E" />
+
+                            <!-- Right: Live Monospace Stopwatch Time -->
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                                <TextBlock x:Name="CompactTimerTime" Text="00:00.0"
+                                           FontFamily="{DynamicResource Font.Display}" FontSize="12.5" FontWeight="Bold"
+                                           Foreground="{DynamicResource Text.Primary}" VerticalAlignment="Center" />
+                            </StackPanel>
                         </Grid>
                     </Grid>
 
@@ -1197,7 +1239,8 @@
                             </Grid.ColumnDefinitions>
 
                             <!-- Left: Weather Card -->
-                            <Border Grid.Column="0" Background="{DynamicResource Fill.Hover}" CornerRadius="12" Padding="12,10" Margin="0,0,8,0">
+                            <Border Grid.Column="0" Background="{DynamicResource Fill.Hover}" CornerRadius="12" Padding="12,10" Margin="0,0,8,0"
+                                    Cursor="Hand" ToolTip="Click to refresh weather &amp; trigger Island Peek" MouseLeftButtonUp="WeatherCard_Click">
                                 <StackPanel VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <TextBlock x:Name="WeatherIcon" Text="&#xE707;" FontFamily="{DynamicResource Font.Icons}"
@@ -1211,6 +1254,14 @@
                                                FontSize="10" Foreground="{DynamicResource Text.Tertiary}" Margin="0,1,0,0" />
                                     <TextBlock x:Name="WeatherDetails" Text="H: 31°  L: 24°" FontFamily="{DynamicResource Font.Text}"
                                                FontSize="9.5" Foreground="{DynamicResource Text.Secondary}" Margin="0,4,0,0" />
+                                    <Button x:Name="BtnRefreshWeather" Style="{DynamicResource IslandButton}"
+                                            Padding="6,3" Margin="0,6,0,0" HorizontalAlignment="Left" Click="BtnRefreshWeather_Click"
+                                            ToolTip="Refresh weather &amp; preview island peek">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#xE72C;" FontFamily="{DynamicResource Font.Icons}" FontSize="9.5" Foreground="{DynamicResource Accent.Yellow}" Margin="0,0,4,0" />
+                                            <TextBlock Text="Refresh &amp; Peek" FontSize="9.5" Foreground="{DynamicResource Text.Secondary}" />
+                                        </StackPanel>
+                                    </Button>
                                 </StackPanel>
                             </Border>
 

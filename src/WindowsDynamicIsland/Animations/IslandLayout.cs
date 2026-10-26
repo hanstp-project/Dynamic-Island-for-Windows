@@ -76,7 +76,7 @@ public static class IslandLayout
     };
 
     public static IslandGeometry For(IslandState state, ExpandedPage page, bool musicPlaying,
-                                     bool notificationDetails, AppSettings s)
+                                     bool notificationDetails, AppSettings s, bool timerRunning = false)
     {
         double cw = s.CompactWidth, ch = s.CompactHeight;
         double capsule = ch / 2;
@@ -87,18 +87,26 @@ public static class IslandLayout
         switch (state)
         {
             case IslandState.Idle:
+            {
+                if (timerRunning)
+                {
+                    return new(cw + 54, ch, capsule, opacity);
+                }
                 return new(cw, ch, capsule, opacity);
+            }
 
             case IslandState.MusicPlaying:
             {
                 double extra = s.ShowCompactLyrics ? MusicExtraWidth + 36 : MusicExtraWidth;
+                if (timerRunning) extra += 56;
                 return new(cw + extra, ch, capsule, opacity);
             }
 
             case IslandState.Hovered:
             {
                 double musicExtra = s.ShowCompactLyrics ? MusicExtraWidth + 36 : MusicExtraWidth;
-                double baseW = musicPlaying ? cw + musicExtra : cw;
+                if (timerRunning && musicPlaying) musicExtra += 56;
+                double baseW = musicPlaying ? cw + musicExtra : (timerRunning ? cw + 54 : cw);
                 double h = ch + HoverGrowHeight;
                 return new(baseW + HoverGrowWidth, h, h / 2, opacity);
             }

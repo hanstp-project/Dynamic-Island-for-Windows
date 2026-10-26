@@ -908,6 +908,46 @@ public class UnitTest1
 
         service.Stop();
     }
+
+    [Fact]
+    public void TestCompactStopwatchLayoutAndTimerRunning()
+    {
+        var s = new AppSettings();
+        var geomIdleNormal = IslandLayout.For(IslandState.Idle, ExpandedPage.Dashboard, false, false, s, timerRunning: false);
+        Assert.Equal(s.CompactWidth, geomIdleNormal.Width);
+
+        var geomIdleRunning = IslandLayout.For(IslandState.Idle, ExpandedPage.Dashboard, false, false, s, timerRunning: true);
+        Assert.Equal(s.CompactWidth + 54, geomIdleRunning.Width);
+
+        s.ShowCompactLyrics = false;
+        var geomMusicRunning = IslandLayout.For(IslandState.MusicPlaying, ExpandedPage.Dashboard, true, false, s, timerRunning: true);
+        Assert.Equal(s.CompactWidth + IslandLayout.MusicExtraWidth + 56, geomMusicRunning.Width);
+    }
+
+    [Fact]
+    public void TestWeatherInfoEmojiAndTimerServiceStateChanged()
+    {
+        var w = new WeatherInfo { Temperature = 29, Condition = "Clear Sky", Emoji = "☀️" };
+        Assert.Equal("☀️", w.Emoji);
+
+        var timerService = new Services.TimerService();
+        int stateChangedCount = 0;
+        timerService.StateChanged += () => stateChangedCount++;
+
+        timerService.Start();
+        Assert.True(timerService.IsRunning);
+        Assert.Equal(1, stateChangedCount);
+
+        timerService.Pause();
+        Assert.False(timerService.IsRunning);
+        Assert.Equal(2, stateChangedCount);
+
+        timerService.Reset();
+        Assert.Equal(3, stateChangedCount);
+
+        timerService.SetMode(Services.TimerMode.Countdown);
+        Assert.Equal(4, stateChangedCount);
+    }
 }
 
 
