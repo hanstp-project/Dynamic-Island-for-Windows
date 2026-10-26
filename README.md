@@ -17,7 +17,6 @@ Aplikasi floating bar interaktif nan elegan bergaya **Dynamic Island (iPhone)** 
 - [🍏 Versi macOS (Native Swift & SwiftUI)](#-versi-macos-native-swift--swiftui)
 - [🛠️ Panduan Untuk Pengembang (Build from Source)](#️-panduan-untuk-pengembang-build-from-source)
 - [❓ FAQ & Troubleshooting](#-faq--troubleshooting)
-- [📜 Lisensi](#-lisensi)
 
 ---
 
@@ -182,10 +181,5 @@ Kontribusi selalu diterima dengan senang hati!
 3. Commit perubahan Anda (`git commit -m 'feat: Menambahkan fitur keren'`).
 4. Push ke branch (`git push origin feature/FiturKeren`).
 5. Buat **Pull Request**.
-
----
-
-## 📜 Lisensi
-Hak Cipta © 2026 **hanstp project** (`hanstp_projects`).
 
 

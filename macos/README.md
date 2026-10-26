@@ -63,9 +63,3 @@ chmod +x build.sh
 1. Buka folder `macos` di Finder.
 2. Klik 2x pada file `Package.swift` (Xcode akan otomatis terbuka).
 3. Klik tombol **Run (▶️)** di pojok kiri atas Xcode.
-
----
-
-## 📜 Lisensi
-Hak Cipta © 2026 **hanstp project** (`hanstp_projects`).
-Didistribusikan di bawah lisensi MIT License.
