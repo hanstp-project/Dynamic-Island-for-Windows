@@ -28,6 +28,31 @@ public struct SettingsView: View {
                         .foregroundColor(.white.opacity(0.4))
                 }
 
+                // Standalone Settings Window Launcher Button (Matching Windows Edition)
+                Button(action: {
+                    SettingsWindowController.shared.show()
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "slider.horizontal.3")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(Color(hex: "#0A84FF"))
+                        Text("Buka Jendela Pengaturan Lengkap...")
+                            .font(.system(size: 11.5, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                        Spacer()
+                        Image(systemName: "arrow.up.forward.app")
+                            .font(.system(size: 11))
+                            .foregroundColor(.white.opacity(0.5))
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color(hex: "#0A84FF").opacity(0.18))
+                    .cornerRadius(8)
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color(hex: "#0A84FF").opacity(0.35), lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+                .help("Buka Jendela Pengaturan Mandiri (Appearance, Features, Sliders)")
+
                 Divider()
                     .background(Color.white.opacity(0.12))
 

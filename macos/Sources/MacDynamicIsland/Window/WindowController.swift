@@ -16,6 +16,10 @@ public final class WindowController: ObservableObject {
     public func setupWindow() {
         guard let screen = NSScreen.main else { return }
 
+        let s = SettingsManager.shared.settings
+        self.currentDisplayMode = s.islandStyle
+        self.verticalOffset = (s.islandStyle == .macBookNotch) ? 0 : CGFloat(s.topOffset)
+
         let initialWidth: CGFloat = 800
         let initialHeight: CGFloat = 450
 
@@ -33,6 +37,7 @@ public final class WindowController: ObservableObject {
             .environmentObject(SystemMonitorService.shared)
             .environmentObject(NotificationService.shared)
             .environmentObject(StartupService.shared)
+            .environmentObject(SettingsManager.shared)
 
         panel.contentView = NSHostingView(rootView: rootView)
         panel.orderFrontRegardless()
@@ -40,17 +45,24 @@ public final class WindowController: ObservableObject {
         self.panel = panel
 
         // Check if device has a physical MacBook notch
-        if let topInset = screen.safeAreaInsets.top as CGFloat?, topInset > 24.0 {
-            // Default to notch mode if physical notch exists!
-            self.currentDisplayMode = .macBookNotch
+        if let topInset = screen.safeAreaInsets.top as CGFloat?, topInset > 24.0, s.islandStyle == .macBookNotch {
             self.verticalOffset = 0
             reposition()
         }
     }
 
+    public func applySettings(_ s: MacAppSettings) {
+        self.currentDisplayMode = s.islandStyle
+        self.verticalOffset = (s.islandStyle == .macBookNotch) ? 0 : CGFloat(s.topOffset)
+        reposition()
+    }
+
     public func toggleDisplayMode() {
         currentDisplayMode = (currentDisplayMode == .dynamicIsland) ? .macBookNotch : .dynamicIsland
-        verticalOffset = (currentDisplayMode == .macBookNotch) ? 0 : 12.0
+        verticalOffset = (currentDisplayMode == .macBookNotch) ? 0 : CGFloat(SettingsManager.shared.settings.topOffset)
+        var s = SettingsManager.shared.settings
+        s.islandStyle = currentDisplayMode
+        SettingsManager.shared.save(s)
         reposition()
     }
 

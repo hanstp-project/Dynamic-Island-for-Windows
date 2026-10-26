@@ -6,6 +6,7 @@ import CoreMedia
 import CoreVideo
 
 public enum RetroFilter: String, CaseIterable, Identifiable {
+    case normal = "Original"
     case warm90s = "Warm '90s"
     case cyberpunk = "Cyberpunk"
     case monochrome = "B&W Film"
@@ -16,6 +17,7 @@ public enum RetroFilter: String, CaseIterable, Identifiable {
 
     public var emoji: String {
         switch self {
+        case .normal: return "✨"
         case .warm90s: return "🎞️"
         case .cyberpunk: return "🌆"
         case .monochrome: return "🖤"

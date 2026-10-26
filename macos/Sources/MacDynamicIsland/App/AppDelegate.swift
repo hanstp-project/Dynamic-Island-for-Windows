@@ -46,6 +46,10 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         startupItem.state = StartupService.shared.isEnabled ? .on : .off
         menu.addItem(startupItem)
 
+        let settingsItem = NSMenuItem(title: "⚙️ Pengaturan (Settings)...", action: #selector(openSettings), keyEquivalent: ",")
+        settingsItem.target = self
+        menu.addItem(settingsItem)
+
         menu.addItem(NSMenuItem.separator())
 
         let quitItem = NSMenuItem(title: "Keluar (Quit)", action: #selector(quitApp), keyEquivalent: "q")
@@ -53,6 +57,10 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(quitItem)
 
         statusItem?.menu = menu
+    }
+
+    @objc private func openSettings() {
+        SettingsWindowController.shared.show()
     }
 
     @objc private func toggleMode() {

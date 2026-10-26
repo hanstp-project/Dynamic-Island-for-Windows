@@ -7,6 +7,7 @@ public struct IslandMainView: View {
     @EnvironmentObject private var mediaService: MediaService
     @EnvironmentObject private var notifService: NotificationService
     @EnvironmentObject private var lyricsService: LyricsService
+    @ObservedObject private var settingsManager = SettingsManager.shared
     @ObservedObject private var toolsService = ToolsService.shared
 
     @State private var expansionState: IslandExpansionState = .compact
@@ -18,33 +19,48 @@ public struct IslandMainView: View {
     private var currentWidth: CGFloat {
         switch expansionState {
         case .compact:
-            return (toolsService.isTimerRunning || toolsService.isStopwatchRunning) ? 250 : 220
+            let base = CGFloat(settingsManager.settings.compactWidth)
+            return (toolsService.isTimerRunning || toolsService.isStopwatchRunning) ? max(base, 230) : base
         case .notificationExpanded:
             return 400
         case .lyricsExpanded:
-            return 490
-        case .pageExpanded:
-            return 490
+            return CGFloat(settingsManager.settings.expandedWidth)
+        case .pageExpanded(let subpage):
+            if subpage == .camera {
+                return max(CGFloat(settingsManager.settings.expandedWidth), 400)
+            }
+            return CGFloat(settingsManager.settings.expandedWidth)
         }
     }
 
     private var currentHeight: CGFloat {
         switch expansionState {
         case .compact:
-            return 36
+            return CGFloat(settingsManager.settings.compactHeight)
         case .notificationExpanded:
             return 82
         case .lyricsExpanded:
             return 340
-        case .pageExpanded:
-            return 260
+        case .pageExpanded(let subpage):
+            switch subpage {
+            case .camera:
+                return 320
+            case .media:
+                return 280
+            case .dashboard:
+                return 270
+            case .system, .clock, .weather:
+                return 260
+            case .tools, .settings:
+                return 280
+            }
         }
     }
 
     public var body: some View {
         VStack(spacing: 0) {
             ZStack {
-                // Background & Glassmorphic Pill
+                // Background: Solid Jet-Black Matte (OLED pitch black, non-glossy)
                 islandBackground
 
                 // Content View according to Expansion State
@@ -64,7 +80,94 @@ public struct IslandMainView: View {
 
                     case .pageExpanded(let page):
                         VStack(spacing: 0) {
-                            // Subpage Body
+                            // Top Header: Title & Switcher | Dots Navigation | Settings & Collapse (Identical to Windows Edition)
+                            HStack(alignment: .center, spacing: 8) {
+                                // Left: Subpage Title + Mode Switcher Button
+                                HStack(spacing: 6) {
+                                    Text(page.rawValue)
+                                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                                        .foregroundColor(.white.opacity(0.85))
+
+                                    Button(action: {
+                                        withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                                            windowController.toggleDisplayMode()
+                                        }
+                                    }) {
+                                        HStack(spacing: 3) {
+                                            Image(systemName: windowController.currentDisplayMode == .macBookNotch ? "laptopcomputer" : "capsule.fill")
+                                                .font(.system(size: 8.5))
+                                            Text(windowController.currentDisplayMode == .macBookNotch ? "Notch" : "Island")
+                                                .font(.system(size: 8.5, weight: .bold, design: .rounded))
+                                        }
+                                        .foregroundColor(Color(hex: "#0A84FF"))
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2.5)
+                                        .background(Color(hex: "#0A84FF").opacity(0.18))
+                                        .clipShape(Capsule())
+                                    }
+                                    .buttonStyle(.plain)
+                                    .help("Ganti Mode: Dynamic Island <-> MacBook Notch")
+                                }
+
+                                Spacer()
+
+                                // Center: Page Indicator Dots (Interactive)
+                                HStack(spacing: 5) {
+                                    ForEach(ExpandedSubpage.allCases) { subpage in
+                                        Button(action: {
+                                            withAnimation(.spring(response: 0.32, dampingFraction: 0.75)) {
+                                                activePage = subpage
+                                                expansionState = .pageExpanded(subpage)
+                                            }
+                                        }) {
+                                            Circle()
+                                                .fill(activePage == subpage ? Color.white : Color.white.opacity(0.24))
+                                                .frame(width: activePage == subpage ? 8 : 5, height: activePage == subpage ? 8 : 5)
+                                                .shadow(color: activePage == subpage ? Color.white.opacity(0.6) : Color.clear, radius: 2)
+                                        }
+                                        .buttonStyle(.plain)
+                                        .help(subpage.rawValue)
+                                    }
+                                }
+
+                                Spacer()
+
+                                // Right: Settings Window Button & Collapse Button
+                                HStack(spacing: 6) {
+                                    Button(action: {
+                                        SettingsWindowController.shared.show()
+                                    }) {
+                                        Image(systemName: "gearshape.fill")
+                                            .font(.system(size: 10.5, weight: .bold))
+                                            .foregroundColor(.white.opacity(0.75))
+                                            .frame(width: 22, height: 22)
+                                            .background(Color.white.opacity(0.08))
+                                            .clipShape(Circle())
+                                    }
+                                    .buttonStyle(.plain)
+                                    .help("Buka Jendela Pengaturan (Settings)...")
+
+                                    Button(action: {
+                                        withAnimation(.spring(response: 0.36, dampingFraction: 0.72)) {
+                                            expansionState = .compact
+                                        }
+                                    }) {
+                                        Image(systemName: "chevron.up")
+                                            .font(.system(size: 9.5, weight: .bold))
+                                            .foregroundColor(.white.opacity(0.75))
+                                            .frame(width: 22, height: 22)
+                                            .background(Color.white.opacity(0.08))
+                                            .clipShape(Circle())
+                                    }
+                                    .buttonStyle(.plain)
+                                    .help("Kecilkan Pulau")
+                                }
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.top, 10)
+                            .padding(.bottom, 4)
+
+                            // Subpage Body Content
                             Group {
                                 switch page {
                                 case .media:
@@ -88,10 +191,10 @@ public struct IslandMainView: View {
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                             Divider()
-                                .background(Color.white.opacity(0.12))
+                                .background(Color.white.opacity(0.10))
 
-                            // 8-Icon Master Navigation Bar
-                            HStack(spacing: 4) {
+                            // 8-Icon Master Bottom Quick Switcher
+                            HStack(spacing: 3) {
                                 ForEach(ExpandedSubpage.allCases) { subpage in
                                     Button(action: {
                                         withAnimation(.spring(response: 0.32, dampingFraction: 0.75)) {
@@ -101,43 +204,25 @@ public struct IslandMainView: View {
                                     }) {
                                         HStack(spacing: 4) {
                                             Image(systemName: subpage.icon)
-                                                .font(.system(size: 11, weight: activePage == subpage ? .bold : .medium))
+                                                .font(.system(size: 10, weight: activePage == subpage ? .bold : .medium))
                                             if activePage == subpage {
                                                 Text(subpage.rawValue)
-                                                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                                                    .font(.system(size: 9.5, weight: .bold, design: .rounded))
                                             }
                                         }
-                                        .foregroundColor(activePage == subpage ? .white : .white.opacity(0.45))
-                                        .padding(.horizontal, activePage == subpage ? 9 : 7)
-                                        .padding(.vertical, 5)
-                                        .background(activePage == subpage ? Color.white.opacity(0.18) : Color.clear)
+                                        .foregroundColor(activePage == subpage ? .white : .white.opacity(0.40))
+                                        .padding(.horizontal, activePage == subpage ? 8 : 6)
+                                        .padding(.vertical, 4)
+                                        .background(activePage == subpage ? Color.white.opacity(0.16) : Color.clear)
                                         .clipShape(Capsule())
                                     }
                                     .buttonStyle(.plain)
                                     .help(subpage.rawValue)
                                 }
-
-                                Spacer()
-
-                                // Collapse Button
-                                Button(action: {
-                                    withAnimation(.spring(response: 0.36, dampingFraction: 0.72)) {
-                                        expansionState = .compact
-                                    }
-                                }) {
-                                    Image(systemName: "chevron.up")
-                                        .font(.system(size: 11, weight: .bold))
-                                        .foregroundColor(.white.opacity(0.4))
-                                        .padding(6)
-                                        .background(Color.white.opacity(0.08))
-                                        .clipShape(Circle())
-                                }
-                                .buttonStyle(.plain)
-                                .help("Kecilkan Pulau")
                             }
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(Color.black.opacity(0.35))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.black.opacity(0.40))
                         }
                         .transition(.opacity)
                     }
@@ -148,9 +233,9 @@ public struct IslandMainView: View {
             .clipShape(IslandShape(isNotch: windowController.currentDisplayMode == .macBookNotch))
             .overlay(
                 IslandShape(isNotch: windowController.currentDisplayMode == .macBookNotch)
-                    .stroke(Color.white.opacity(0.14), lineWidth: 0.8)
+                    .stroke(Color.white.opacity(0.10), lineWidth: 0.8)
             )
-            .shadow(color: Color.black.opacity(0.45), radius: 18, x: 0, y: 8)
+            .shadow(color: Color.black.opacity(0.55), radius: 18, x: 0, y: 8)
             .animation(.spring(response: 0.38, dampingFraction: 0.72, blendDuration: 0), value: expansionState)
             .animation(.spring(response: 0.38, dampingFraction: 0.72, blendDuration: 0), value: windowController.currentDisplayMode)
             .onHover { hovering in
@@ -178,24 +263,13 @@ public struct IslandMainView: View {
     }
 
     private var islandBackground: some View {
-        ZStack {
-            // Jet-black OLED base
-            Color.black.opacity(0.92)
-
-            // Ultra-subtle glassmorphic blur reflection
-            Color.white.opacity(0.04)
-
-            // Subtle top highlight
-            LinearGradient(
-                colors: [Color.white.opacity(0.08), Color.clear],
-                startPoint: .top,
-                endPoint: .center
-            )
-        }
+        // Pure Solid Jet-Black Matte (OLED pitch black, non-glossy, no white sheen/glare)
+        Color.black.opacity(settingsManager.settings.pillOpacity)
     }
 
     // MARK: - Interactions
     private func handleTap() {
+        guard settingsManager.settings.expandOnClick else { return }
         withAnimation(.spring(response: 0.36, dampingFraction: 0.72)) {
             if expansionState == .compact {
                 let target = mediaService.isMediaAvailable ? .media : activePage
@@ -205,6 +279,7 @@ public struct IslandMainView: View {
     }
 
     private func handleHover(_ hovering: Bool) {
+        guard settingsManager.settings.expandOnHover else { return }
         if hovering {
             if expansionState == .compact {
                 withAnimation(.spring(response: 0.36, dampingFraction: 0.72)) {

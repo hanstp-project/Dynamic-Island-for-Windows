@@ -1,7 +1,9 @@
 import SwiftUI
 import AppKit
 
-/// Retro Instant Camera View with live webcam viewfinder, Polaroid filter picker, and physical print ejection animation
+/// Retro Instant Camera View matching Windows Edition layout
+/// (Vertical camera body, 368x168 viewfinder with center 1:1 sharp & bokeh flanks, pinhole lens,
+/// live HUD & glowing amber date stamp, dual-ring red shutter, 6 filter preset cards, polaroid print ejection)
 public struct RetroCameraView: View {
     @ObservedObject private var cameraService = CameraService.shared
     @State private var isShowingSavedToast: Bool = false
@@ -11,163 +13,297 @@ public struct RetroCameraView: View {
     public init() {}
 
     public var body: some View {
-        HStack(spacing: 16) {
-            // Left: Vintage Viewfinder Screen or Ejected Photo
+        VStack(spacing: 6) {
+            // Camera Body Shell
             ZStack {
-                // Outer Polaroid border
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(Color(white: 0.12))
-                    .frame(width: 200, height: 180)
-                    .overlay(
+                VStack(spacing: 6) {
+                    // 1. Full-Width Viewfinder with Focused 1:1 Center & Bokeh Flanks
+                    ZStack {
+                        // Background dark chamber
                         RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                    )
+                            .fill(Color(hex: "#0A0B0E"))
+                            .frame(width: 368, height: 168)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Color.white.opacity(0.12), lineWidth: 1.2)
+                            )
 
-                // Viewfinder Screen
-                ZStack {
-                    if let img = cameraService.capturedImage {
-                        Image(nsImage: img)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 180, height: 140)
-                            .clipped()
-                            .cornerRadius(8)
-                            .colorMultiply(filterColor(cameraService.currentFilter))
-                    } else {
-                        // Simulated Retro Viewfinder Grid
-                        ZStack {
-                            Color.black
-                            VStack(spacing: 6) {
-                                Image(systemName: "camera.aperture")
-                                    .font(.system(size: 32))
-                                    .foregroundColor(.orange.opacity(0.8))
-                                Text("RETRO CAM • LIVE")
-                                    .font(.system(size: 10, weight: .bold, design: .monospaced))
-                                    .foregroundColor(.orange)
-                            }
+                        // Blurred Camera Underlay (covers full 368x168 with gentle bokeh blur)
+                        if let img = cameraService.capturedImage {
+                            Image(nsImage: img)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 368, height: 168)
+                                .clipped()
+                                .blur(radius: 14)
+                                .opacity(0.85)
+                                .colorMultiply(filterMultiplyColor(cameraService.currentFilter))
                         }
-                        .frame(width: 180, height: 140)
-                        .cornerRadius(8)
-                    }
 
-                    // Viewfinder Crosshairs & Timestamp
-                    VStack {
-                        HStack {
-                            Text("REC ●")
-                                .font(.system(size: 9, weight: .bold, design: .monospaced))
-                                .foregroundColor(.red)
+                        // Vignette flank gradients on left & right
+                        HStack(spacing: 0) {
+                            LinearGradient(
+                                colors: [Color.black.opacity(0.65), Color.clear],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                            .frame(width: 80)
+
                             Spacer()
-                            Text(cameraService.currentDateStamp)
-                                .font(.system(size: 9, weight: .bold, design: .monospaced))
-                                .foregroundColor(.orange)
+
+                            LinearGradient(
+                                colors: [Color.clear, Color.black.opacity(0.65)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                            .frame(width: 80)
                         }
-                        .padding(6)
+                        .frame(width: 368, height: 168)
+                        .allowsHitTesting(false)
 
-                        Spacer()
-                    }
-
-                    // Flash White Overlay
-                    if cameraService.isFlashTriggered {
-                        Color.white
-                            .transition(.opacity)
-                    }
-
-                    // Ejected Polaroid Animation Overlay
-                    if isEjectingPhoto, let photo = printedPhoto {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color(white: 0.95))
-                                .frame(width: 160, height: 135)
-                                .shadow(color: .black.opacity(0.5), radius: 10, y: 5)
-
-                            VStack(spacing: 4) {
-                                Image(nsImage: photo)
+                        // Focused 1:1 Center Camera (Sharp center viewfinder)
+                        Group {
+                            if let img = cameraService.capturedImage {
+                                Image(nsImage: img)
                                     .resizable()
                                     .scaledToFill()
-                                    .frame(width: 140, height: 100)
+                                    .frame(width: 168, height: 168)
                                     .clipped()
-                                    .cornerRadius(4)
-
-                                Text(cameraService.currentDateStamp)
-                                    .font(.system(size: 8, weight: .bold, design: .monospaced))
-                                    .foregroundColor(.orange)
+                                    .colorMultiply(filterMultiplyColor(cameraService.currentFilter))
+                            } else {
+                                // Live Camera Initializing placeholder
+                                ZStack {
+                                    Color.black.opacity(0.85)
+                                    VStack(spacing: 6) {
+                                        Image(systemName: "camera.aperture")
+                                            .font(.system(size: 28))
+                                            .foregroundColor(Color(hex: "#F59E0B").opacity(0.8))
+                                        Text("RETRO CAM • LIVE")
+                                            .font(.system(size: 9.5, weight: .bold, design: .monospaced))
+                                            .foregroundColor(Color(hex: "#F59E0B"))
+                                    }
+                                }
+                                .frame(width: 168, height: 168)
                             }
                         }
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                    }
-                }
-                .frame(width: 180, height: 140)
-            }
+                        .frame(width: 168, height: 168)
 
-            // Right: Filter Selector & Shutter Button
-            VStack(alignment: .leading, spacing: 12) {
-                // Header
-                HStack {
-                    Text("Instant Polaroid")
-                        .font(.system(size: 13, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
-                    Spacer()
-                    Text(cameraService.currentFilter.emoji)
-                        .font(.system(size: 14))
-                }
-
-                // Filter Buttons Carousel
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 6) {
-                        ForEach(RetroFilter.allCases) { filter in
-                            Button(action: {
-                                cameraService.currentFilter = filter
-                            }) {
-                                Text("\(filter.emoji) \(filter.rawValue)")
-                                    .font(.system(size: 10, weight: .semibold, design: .rounded))
-                                    .foregroundColor(cameraService.currentFilter == filter ? .black : .white.opacity(0.8))
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 5)
-                                    .background(cameraService.currentFilter == filter ? Color.orange : Color.white.opacity(0.12))
-                                    .clipShape(Capsule())
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                }
-
-                Spacer()
-
-                // Bottom: Big Red Shutter Button & Status
-                HStack(spacing: 10) {
-                    Button(action: {
-                        takePictureWithAnimation()
-                    }) {
-                        HStack(spacing: 8) {
+                        // Top Center Camera Lens Pinhole Dot
+                        VStack {
                             ZStack {
                                 Circle()
-                                    .fill(Color.red)
-                                    .frame(width: 32, height: 32)
+                                    .fill(Color.black)
+                                    .frame(width: 8, height: 8)
+                                    .overlay(Circle().stroke(Color.gray.opacity(0.6), lineWidth: 1))
                                 Circle()
-                                    .stroke(Color.white, lineWidth: 2)
-                                    .frame(width: 26, height: 26)
+                                    .fill(Color(hex: "#3B82F6"))
+                                    .frame(width: 3, height: 3)
                             }
-                            Text("Ambil Foto")
-                                .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .padding(.top, 5)
+                            Spacer()
+                        }
+
+                        // Viewfinder Flash Effect Overlay
+                        if cameraService.isFlashTriggered {
+                            Color.white
+                                .frame(width: 368, height: 168)
+                                .clipShape(RoundedRectangle(cornerRadius: 14))
+                                .transition(.opacity)
+                        }
+
+                        // Bottom Viewfinder HUD
+                        VStack {
+                            Spacer()
+                            HStack(alignment: .center) {
+                                // Bottom Left: Status Live & Filter Name
+                                HStack(spacing: 4) {
+                                    Circle()
+                                        .fill(Color(hex: "#22C55E"))
+                                        .frame(width: 6, height: 6)
+                                    Text("LIVE")
+                                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                                        .foregroundColor(Color(hex: "#22C55E"))
+
+                                    Text("• \(cameraService.currentFilter.rawValue.uppercased())")
+                                        .font(.system(size: 8.5, weight: .semibold, design: .monospaced))
+                                        .foregroundColor(Color.white.opacity(0.9))
+                                }
+
+                                Spacer()
+
+                                // Bottom Right: Vintage Glowing Amber Date Stamp
+                                Text(cameraService.currentDateStamp)
+                                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                                    .foregroundColor(Color(hex: "#F59E0B"))
+                                    .shadow(color: Color(hex: "#F59E0B").opacity(0.7), radius: 4)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.bottom, 8)
+                        }
+                        .allowsHitTesting(false)
+
+                        // Ejected Polaroid Animation Overlay
+                        if isEjectingPhoto, let photo = printedPhoto {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color(white: 0.96))
+                                    .frame(width: 170, height: 150)
+                                    .shadow(color: Color.black.opacity(0.6), radius: 12, y: 6)
+
+                                VStack(spacing: 4) {
+                                    Image(nsImage: photo)
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 152, height: 112)
+                                        .clipped()
+                                        .cornerRadius(4)
+
+                                    HStack {
+                                        Text(cameraService.currentDateStamp)
+                                            .font(.system(size: 8.5, weight: .bold, design: .monospaced))
+                                            .foregroundColor(Color(hex: "#F59E0B"))
+                                        Spacer()
+                                        Text(cameraService.currentFilter.rawValue)
+                                            .font(.system(size: 7.5, weight: .semibold))
+                                            .foregroundColor(Color.black.opacity(0.6))
+                                    }
+                                    .padding(.horizontal, 10)
+                                }
+                            }
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                        }
+                    }
+                    .frame(width: 368, height: 168)
+
+                    // 2. Retro Control Bar: Active Filter Badge, Shutter Button, Gallery
+                    HStack {
+                        // Left: Active Filter Badge Indicator
+                        HStack(spacing: 4) {
+                            Text(cameraService.currentFilter.emoji)
+                                .font(.system(size: 11))
+                            Text(cameraService.currentFilter.rawValue)
+                                .font(.system(size: 9.5, weight: .semibold))
                                 .foregroundColor(.white)
                         }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color.white.opacity(0.1))
-                        .clipShape(Capsule())
-                    }
-                    .buttonStyle(.plain)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.white.opacity(0.08))
+                        .cornerRadius(12)
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.12), lineWidth: 1))
 
+                        Spacer()
+
+                        // Center: Big Retro Red Mechanical Shutter Button
+                        Button(action: {
+                            takePictureWithAnimation()
+                        }) {
+                            HStack(spacing: 6) {
+                                Circle()
+                                    .fill(Color(hex: "#EF4444"))
+                                    .frame(width: 9, height: 9)
+                                    .overlay(Circle().stroke(Color.white, lineWidth: 1.2))
+
+                                Text("SHUTTER")
+                                    .font(.system(size: 10, weight: .heavy, design: .rounded))
+                                    .foregroundColor(.white)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 6)
+                            .background(Color.white.opacity(0.12))
+                            .clipShape(Capsule())
+                            .overlay(
+                                Capsule().stroke(Color.white.opacity(0.20), lineWidth: 1.2)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .help("Ambil Foto & Cetak Lembaran Polaroid")
+
+                        Spacer()
+
+                        // Right: Open Pictures Folder Button
+                        Button(action: {
+                            openPicturesFolder()
+                        }) {
+                            HStack(spacing: 4) {
+                                Text("🖼️")
+                                    .font(.system(size: 11))
+                                Text("Galeri")
+                                    .font(.system(size: 9.5, weight: .semibold))
+                                    .foregroundColor(.white)
+                            }
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.white.opacity(0.08))
+                            .cornerRadius(12)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Buka Folder Foto Polaroid")
+                    }
+                    .frame(width: 368)
+                    .padding(.vertical, 2)
+
+                    // 3. Filter Presets Strip (6 Filter cards matching Windows)
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 6) {
+                            ForEach(RetroFilter.allCases) { filter in
+                                Button(action: {
+                                    cameraService.currentFilter = filter
+                                }) {
+                                    VStack(spacing: 2) {
+                                        ZStack {
+                                            RoundedRectangle(cornerRadius: 5)
+                                                .fill(filterCardBackground(filter))
+                                                .frame(width: 48, height: 28)
+
+                                            Text(filter.emoji)
+                                                .font(.system(size: 14))
+                                        }
+
+                                        Text(filter.rawValue)
+                                            .font(.system(size: 8, weight: cameraService.currentFilter == filter ? .bold : .medium))
+                                            .foregroundColor(cameraService.currentFilter == filter ? .white : .white.opacity(0.6))
+                                            .lineLimit(1)
+                                    }
+                                    .frame(width: 52, height: 46)
+                                    .padding(2)
+                                    .background(cameraService.currentFilter == filter ? Color.white.opacity(0.14) : Color.white.opacity(0.05))
+                                    .cornerRadius(7)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 7)
+                                            .stroke(cameraService.currentFilter == filter ? Color(hex: "#0A84FF") : Color.white.opacity(0.10), lineWidth: cameraService.currentFilter == filter ? 1.5 : 0.8)
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.horizontal, 2)
+                    }
+                    .frame(width: 368, height: 48)
+
+                    // 4. Mechanical Paper Ejection Slot Line
+                    RoundedRectangle(cornerRadius: 1.2)
+                        .fill(Color(hex: "#08080A"))
+                        .frame(width: 180, height: 2.5)
+                        .overlay(RoundedRectangle(cornerRadius: 1.2).stroke(Color.white.opacity(0.10), lineWidth: 0.8))
+
+                    // Saved Toast Notification
                     if isShowingSavedToast {
-                        Text("Tersimpan di Pictures! 📸")
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundColor(.green)
+                        Text("Tersimpan di Pictures/PolaroidPhotos! 📸")
+                            .font(.system(size: 9.5, weight: .semibold, design: .rounded))
+                            .foregroundColor(Color(hex: "#22C55E"))
                             .transition(.opacity)
                     }
                 }
+                .padding(6)
             }
+            .frame(width: 384)
+            .background(Color(hex: "#0E0F13").opacity(0.95))
+            .cornerRadius(16)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.white.opacity(0.10), lineWidth: 1.2)
+            )
         }
-        .padding(16)
         .onAppear {
             cameraService.start()
         }
@@ -176,6 +312,7 @@ public struct RetroCameraView: View {
         }
     }
 
+    // MARK: - Actions
     private func takePictureWithAnimation() {
         cameraService.capturePhoto()
         printedPhoto = cameraService.lastCapturedPhoto ?? cameraService.capturedImage
@@ -194,13 +331,32 @@ public struct RetroCameraView: View {
         }
     }
 
-    private func filterColor(_ filter: RetroFilter) -> Color {
+    private func openPicturesFolder() {
+        let pictures = FileManager.default.urls(for: .picturesDirectory, in: .userDomainMask).first!
+        let polaroidDir = pictures.appendingPathComponent("PolaroidPhotos", isDirectory: true)
+        try? FileManager.default.createDirectory(at: polaroidDir, withIntermediateDirectories: true)
+        NSWorkspace.shared.open(polaroidDir)
+    }
+
+    private func filterMultiplyColor(_ filter: RetroFilter) -> Color {
         switch filter {
-        case .warm90s: return Color(red: 1.0, green: 0.92, blue: 0.8)
-        case .cyberpunk: return Color(red: 0.8, green: 0.8, blue: 1.1)
-        case .monochrome: return Color(white: 0.9)
-        case .sepia: return Color(red: 0.95, green: 0.85, blue: 0.7)
-        case .vibrant: return Color(red: 1.05, green: 1.05, blue: 1.05)
+        case .normal: return Color.white
+        case .warm90s: return Color(red: 1.0, green: 0.91, blue: 0.78)
+        case .cyberpunk: return Color(red: 0.82, green: 0.85, blue: 1.15)
+        case .monochrome: return Color(white: 0.92)
+        case .sepia: return Color(red: 0.96, green: 0.86, blue: 0.68)
+        case .vibrant: return Color(red: 1.06, green: 1.06, blue: 1.06)
+        }
+    }
+
+    private func filterCardBackground(_ filter: RetroFilter) -> Color {
+        switch filter {
+        case .normal: return Color.gray.opacity(0.3)
+        case .warm90s: return Color.orange.opacity(0.3)
+        case .cyberpunk: return Color.cyan.opacity(0.3)
+        case .monochrome: return Color.black.opacity(0.4)
+        case .sepia: return Color.yellow.opacity(0.25)
+        case .vibrant: return Color.pink.opacity(0.3)
         }
     }
 }
